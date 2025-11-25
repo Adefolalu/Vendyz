@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMiniApp } from "@neynar/react";
 import { Header } from "~/components/ui/Header";
 import { Footer } from "~/components/ui/Footer";
-import { HomeTab, ActionsTab, ContextTab, WalletTab } from "~/components/ui/tabs";
+import { VendingMachine } from "~/components/VendingMachine";
+import { RaffleCard } from "~/components/RaffleCard";
+import { SponsorAuction } from "~/components/SponsorAuction";
 import { USE_WALLET } from "~/lib/constants";
 import { useNeynarUser } from "../hooks/useNeynarUser";
+import { WalletTab } from "~/components/ui/tabs";
+import { ErrorToastContainer } from "~/components/ErrorToast";
+import { TransactionTracker } from "~/components/TransactionTracker";
+import { EventListener } from "~/components/EventListener";
 
 // --- Types ---
 export enum Tab {
   Home = "home",
-  Actions = "actions",
-  Context = "context",
+  Raffle = "raffle",
+  Auction = "auction",
   Wallet = "wallet",
 }
 
@@ -21,57 +27,23 @@ export interface AppProps {
 }
 
 /**
- * App component serves as the main container for the mini app interface.
- * 
- * This component orchestrates the overall mini app experience by:
- * - Managing tab navigation and state
- * - Handling Farcaster mini app initialization
- * - Coordinating wallet and context state
- * - Providing error handling and loading states
- * - Rendering the appropriate tab content based on user selection
- * 
- * The component integrates with the Neynar SDK for Farcaster functionality
- * and Wagmi for wallet management. It provides a complete mini app
- * experience with multiple tabs for different functionality areas.
- * 
- * Features:
- * - Tab-based navigation (Home, Actions, Context, Wallet)
- * - Farcaster mini app integration
- * - Wallet connection management
- * - Error handling and display
- * - Loading states for async operations
- * 
- * @param props - Component props
- * @param props.title - Optional title for the mini app (defaults to "Neynar Starter Kit")
- * 
- * @example
- * ```tsx
- * <App title="My Mini App" />
- * ```
+ * Vendyz - Anonymous Wallet Vending Machine
+ *
+ * Main application component for the Vendyz mini app.
+ * Features three modes:
+ * 1. Vending Machine - Purchase pre-funded anonymous wallets
+ * 2. Raffle - Buy tickets for prize pool
+ * 3. Sponsor Auction - Bid for token placement in wallets
  */
-export default function App(
-  { title }: AppProps = { title: "Neynar Starter Kit" }
-) {
+export default function App({ title }: AppProps = { title: "Vendyz" }) {
   // --- Hooks ---
-  const {
-    isSDKLoaded,
-    context,
-    setInitialTab,
-    setActiveTab,
-    currentTab,
-  } = useMiniApp();
+  const { isSDKLoaded, context, setInitialTab, setActiveTab, currentTab } =
+    useMiniApp();
 
   // --- Neynar user hook ---
   const { user: neynarUser } = useNeynarUser(context || undefined);
 
   // --- Effects ---
-  /**
-   * Sets the initial tab to "home" when the SDK is loaded.
-   * 
-   * This effect ensures that users start on the home tab when they first
-   * load the mini app. It only runs when the SDK is fully loaded to
-   * prevent errors during initialization.
-   */
   useEffect(() => {
     if (isSDKLoaded) {
       setInitialTab(Tab.Home);
@@ -81,10 +53,15 @@ export default function App(
   // --- Early Returns ---
   if (!isSDKLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div
+        className="flex items-center justify-center h-screen"
+        style={{ backgroundColor: "#EEFFBE" }}
+      >
         <div className="text-center">
-          <div className="spinner h-8 w-8 mx-auto mb-4"></div>
-          <p>Loading SDK...</p>
+          <div className="text-6xl mb-4 animate-bounce">🎰</div>
+          <p className="text-lg font-semibold" style={{ color: "#000000" }}>
+            Loading Vendyz...
+          </p>
         </div>
       </div>
     );
@@ -98,26 +75,42 @@ export default function App(
         paddingBottom: context?.client.safeAreaInsets?.bottom ?? 0,
         paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
+        backgroundColor: "#EEFFBE",
+        color: "#000000",
       }}
+      className="min-h-screen"
     >
-      {/* Header should be full width */}
+      {/* Header */}
       <Header neynarUser={neynarUser} />
 
-      {/* Main content and footer should be centered */}
-      <div className="container py-2 pb-20">
-        {/* Main title */}
-        <h1 className="text-2xl font-bold text-center mb-4">{title}</h1>
-
+      {/* Main content */}
+      <div className="container py-4 pb-20">
         {/* Tab content rendering */}
-        {currentTab === Tab.Home && <HomeTab />}
-        {currentTab === Tab.Actions && <ActionsTab />}
-        {currentTab === Tab.Context && <ContextTab />}
+        {currentTab === Tab.Home && <VendingMachine />}
+        {currentTab === Tab.Raffle && (
+          <div className="max-w-2xl mx-auto">
+            <RaffleCard />
+          </div>
+        )}
+        {currentTab === Tab.Auction && (
+          <div className="max-w-2xl mx-auto">
+            <SponsorAuction />
+          </div>
+        )}
         {currentTab === Tab.Wallet && <WalletTab />}
 
         {/* Footer with navigation */}
-        <Footer activeTab={currentTab as Tab} setActiveTab={setActiveTab} showWallet={USE_WALLET} />
+        <Footer
+          activeTab={currentTab as Tab}
+          setActiveTab={setActiveTab}
+          showWallet={USE_WALLET}
+        />
       </div>
+
+      {/* Global UI Components */}
+      <ErrorToastContainer />
+      <TransactionTracker />
+      <EventListener />
     </div>
   );
 }
-
