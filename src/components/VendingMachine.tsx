@@ -7,8 +7,9 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   useBalance,
+  usePublicClient,
 } from "wagmi";
-import { parseUnits, formatUnits } from "viem";
+import { parseUnits, formatUnits, decodeEventLog } from "viem";
 import { VendingMachineAbi, VendingMachineAddress } from "~/lib/constants";
 import { Button } from "./ui/Button";
 import { parseContractError, validatePurchase } from "~/lib/errorHandler";
@@ -18,6 +19,8 @@ import {
   updateTransactionStatus,
 } from "~/components/TransactionTracker";
 import { TierCardSkeleton } from "~/components/LoadingSkeletons";
+import { WalletPreparationModal } from "~/components/WalletPreparationModal";
+import { VendingMachineAnimation } from "~/components/VendingMachineAnimation";
 
 // USDC on Base mainnet
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -73,7 +76,12 @@ export function VendingMachine() {
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [needsApproval, setNeedsApproval] = useState(false);
   const [tiers, setTiers] = useState<TierDisplay[]>([]);
+  const [latestRequestId, setLatestRequestId] = useState<string | null>(null);
+  const [showPreparationModal, setShowPreparationModal] = useState(false);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [winAmount, setWinAmount] = useState<string>("");
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
 
   // Contract write hooks
   const {
@@ -110,19 +118,65 @@ export function VendingMachine() {
     }
   }, [approvalHash, isApprovalConfirming, isApprovalSuccess]);
 
-  // Track purchase transaction status
+  // Track purchase transaction status and extract requestId
   useEffect(() => {
     if (purchaseHash) {
       const tier = tiers.find((t) => t.id === selectedTier);
       if (!isPurchaseConfirming && !isPurchaseSuccess) {
-        trackTransaction(purchaseHash, `Purchase ${tier?.name || "Wallet"} Tier`);
+        trackTransaction(
+          purchaseHash,
+          `Purchase ${tier?.name || "Wallet"} Tier`
+        );
       } else if (isPurchaseConfirming) {
         updateTransactionStatus(purchaseHash, "confirming");
       } else if (isPurchaseSuccess) {
         updateTransactionStatus(purchaseHash, "success");
+        // Extract requestId from transaction receipt
+        extractRequestId(purchaseHash);
       }
     }
-  }, [purchaseHash, isPurchaseConfirming, isPurchaseSuccess, selectedTier, tiers]);
+  }, [
+    purchaseHash,
+    isPurchaseConfirming,
+    isPurchaseSuccess,
+    selectedTier,
+    tiers,
+  ]);
+
+  // Extract requestId from PurchaseInitiated event
+  const extractRequestId = async (txHash: `0x${string}`) => {
+    if (!publicClient) return;
+
+    try {
+      const receipt = await publicClient.getTransactionReceipt({
+        hash: txHash,
+      });
+
+      // Find PurchaseInitiated event
+      for (const log of receipt.logs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: VendingMachineAbi,
+            data: log.data,
+            topics: log.topics,
+          });
+
+          if (decoded.eventName === "PurchaseInitiated") {
+            const requestId = (decoded.args as any).requestId.toString();
+            setLatestRequestId(requestId);
+            setShowAnimation(true);
+            console.log("Request ID extracted:", requestId);
+            break;
+          }
+        } catch (e) {
+          // Skip logs that don't match
+          continue;
+        }
+      }
+    } catch (error) {
+      console.error("Error extracting requestId:", error);
+    }
+  };
 
   // Read user purchase count
   const { data: purchaseCount } = useReadContract({
@@ -295,10 +349,35 @@ export function VendingMachine() {
           }}
         >
           <p className="font-bold">Purchase Successful! 🎉</p>
-          <p className="text-sm">
-            Your wallet is being prepared by Chainlink VRF. Check the History
-            tab!
-          </p>
+          {latestRequestId ? (
+            <div className="mt-2 space-y-2">
+              <p className="text-sm">
+                Your wallet is being prepared by our backend service.
+              </p>
+              <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded border border-green-500">
+                <p className="text-xs font-semibold mb-1">Your Request ID:</p>
+                <p className="font-mono text-sm font-bold">{latestRequestId}</p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(latestRequestId);
+                  }}
+                  className="mt-2 text-xs underline hover:no-underline"
+                >
+                  📋 Copy Request ID
+                </button>
+              </div>
+              <p className="text-xs">
+                💡 Go to the <strong>Wallet</strong> tab to retrieve your funded
+                wallet.
+                <br />
+                ⏱️ This usually takes 1-2 minutes.
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm">
+              Your wallet is being prepared. Check the Wallet tab in a moment!
+            </p>
+          )}
         </div>
       )}
       {isApprovalSuccess && (
@@ -447,6 +526,30 @@ export function VendingMachine() {
           </li>
         </ol>
       </div>
+
+      {/* Vending Machine Animation */}
+      {showAnimation && selectedTier && latestRequestId && (
+        <VendingMachineAnimation
+          tier={tiers.find((t) => t.id === selectedTier)!}
+          requestId={latestRequestId}
+          onComplete={(amount) => {
+            setWinAmount(amount);
+            setShowAnimation(false);
+            setShowPreparationModal(true);
+          }}
+        />
+      )}
+
+      {/* Wallet Preparation Modal */}
+      {showPreparationModal && latestRequestId && (
+        <WalletPreparationModal
+          requestId={latestRequestId}
+          onClose={() => {
+            setShowPreparationModal(false);
+            setLatestRequestId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

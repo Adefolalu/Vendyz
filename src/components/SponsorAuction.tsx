@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment, type ReactElement } from "react";
 import {
   useAccount,
   useReadContract,
@@ -44,7 +44,7 @@ const ERC20_ABI = [
   },
 ] as const;
 
-export function SponsorAuction() {
+export function SponsorAuction(): ReactElement | null {
   const { address, isConnected } = useAccount();
   const [tokenAddress, setTokenAddress] = useState("");
   const [bidAmount, setBidAmount] = useState("");
@@ -67,7 +67,7 @@ export function SponsorAuction() {
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     functionName: "getActiveSponsors",
-  });
+  }) as { data: readonly string[] | undefined };
 
   // Read current bids
   const { data: currentBids } = useReadContract({
@@ -82,7 +82,7 @@ export function SponsorAuction() {
     abi: SponsorAunctionAbi,
     functionName: "getUserBid",
     args: address ? [address] : undefined,
-  });
+  }) as { data: bigint | undefined };
 
   // Read time remaining
   const { data: timeRemaining } = useReadContract({
@@ -96,7 +96,7 @@ export function SponsorAuction() {
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     functionName: "getHighestCurrentBid",
-  });
+  }) as { data: bigint | undefined };
 
   // Read USDC allowance
   const { data: usdcAllowance } = useReadContract({
@@ -243,10 +243,10 @@ export function SponsorAuction() {
     finalized: boolean;
   };
 
-  const now = Math.floor(Date.now() / 1000);
-  const timeLeft = Number(auction.endTime) - now;
-  const daysLeft = Math.floor(timeLeft / 86400);
-  const hoursLeft = Math.floor((timeLeft % 86400) / 3600);
+  const now: number = Math.floor(Date.now() / 1000);
+  const timeLeft: number = Number(auction.endTime) - now;
+  const daysLeft: number = Math.floor(timeLeft / 86400);
+  const hoursLeft: number = Math.floor((timeLeft % 86400) / 3600);
 
   return (
     <div
@@ -262,7 +262,7 @@ export function SponsorAuction() {
           🏆 Sponsor Auction
         </h2>
         <span className="text-sm font-semibold px-3 py-1 bg-orange-600 text-white rounded-full">
-          #{auction.auctionId.toString()}
+          #{String(auction.auctionId)}
         </span>
       </div>
 
@@ -279,7 +279,6 @@ export function SponsorAuction() {
         </p>
       </div>
 
-      {/* Auction Info */}
       <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
         <div
           className="p-3 rounded"
@@ -288,7 +287,7 @@ export function SponsorAuction() {
           <p className="text-gray-600 dark:text-gray-400 mb-1">
             Available Slots
           </p>
-          <p className="font-bold">{auction.availableSlots.toString()} / 5</p>
+          <p className="font-bold">{Number(auction.availableSlots)} / 5</p>
         </div>
         <div
           className="p-3 rounded"
@@ -299,21 +298,20 @@ export function SponsorAuction() {
         </div>
       </div>
 
-      {/* Active Sponsors */}
       {activeSponsors &&
         Array.isArray(activeSponsors) &&
-        (activeSponsors as string[]).length > 0 && (
+        activeSponsors.length > 0 && (
           <div
             className="mb-4 p-4 rounded-lg"
             style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
           >
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              Active Sponsors ({(activeSponsors as string[]).length}/5)
+              Active Sponsors ({activeSponsors.length}/5)
             </p>
             <div className="space-y-1">
-              {(activeSponsors as string[]).slice(0, 5).map((sponsor, idx) => (
+              {activeSponsors.slice(0, 5).map((sponsor, idx) => (
                 <div key={idx} className="text-xs font-mono truncate">
-                  {String(sponsor)}
+                  {sponsor}
                 </div>
               ))}
             </div>
