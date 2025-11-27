@@ -488,7 +488,7 @@ Request ID: ${requestId}
           onClick={onClose}
           className="w-full py-4 text-lg bg-gray-600 hover:bg-gray-700"
         >
-          ✓ I've Saved Everything - Close
+          ✓ I&apos;ve Saved Everything - Close
         </Button>
       )}
     </div>

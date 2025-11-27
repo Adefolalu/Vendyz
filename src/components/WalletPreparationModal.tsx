@@ -30,7 +30,8 @@ export function WalletPreparationModal({
 
   // Poll backend to check if wallet is ready
   useEffect(() => {
-    let pollInterval: NodeJS.Timeout;
+    // eslint-disable-next-line prefer-const
+    let pollInterval: NodeJS.Timeout | undefined;
     let attempts = 0;
     const maxAttempts = 60; // 2 minutes (60 * 2 seconds)
 
@@ -43,7 +44,7 @@ export function WalletPreparationModal({
         setError(
           "Wallet preparation is taking longer than expected. Please check back in a moment using the Wallet tab with your Request ID."
         );
-        clearInterval(pollInterval);
+        if (pollInterval) clearInterval(pollInterval);
         return;
       }
 
@@ -57,7 +58,7 @@ export function WalletPreparationModal({
           const result = await response.json();
           if (result.success && result.data.ready) {
             setStatus("ready");
-            clearInterval(pollInterval);
+            if (pollInterval) clearInterval(pollInterval);
           } else {
             // Wallet not ready yet, continue polling
             console.log(
@@ -82,7 +83,9 @@ export function WalletPreparationModal({
     pollInterval = setInterval(checkWalletStatus, 2000);
     checkWalletStatus(); // Check immediately
 
-    return () => clearInterval(pollInterval);
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [requestId]);
 
   if (status === "ready") {
@@ -190,8 +193,8 @@ export function WalletPreparationModal({
                 {requestId}
               </p>
               <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-2">
-                Use this ID in the Wallet tab to retrieve your wallet once it's
-                ready.
+                Use this ID in the Wallet tab to retrieve your wallet once
+                it&apos;s ready.
               </p>
             </div>
 
