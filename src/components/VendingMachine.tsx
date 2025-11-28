@@ -6,21 +6,22 @@ import {
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
-  useBalance,
   usePublicClient,
+  useConnect,
+  useSendCalls,
+  useCallsStatus,
 } from "wagmi";
-import { parseUnits, formatUnits, decodeEventLog } from "viem";
+import { formatUnits, decodeEventLog, encodeFunctionData } from "viem";
 import { VendingMachineAbi, VendingMachineAddress } from "~/lib/constants";
-import { Button } from "./ui/Button";
 import { parseContractError, validatePurchase } from "~/lib/errorHandler";
 import { showError } from "~/components/ErrorToast";
 import {
   trackTransaction,
   updateTransactionStatus,
 } from "~/components/TransactionTracker";
-import { TierCardSkeleton } from "~/components/LoadingSkeletons";
 import { WalletPreparationModal } from "~/components/WalletPreparationModal";
 import { VendingMachineAnimation } from "~/components/VendingMachineAnimation";
+import { Wallet, XCircle, Zap, Star } from "lucide-react";
 
 // USDC on Base mainnet
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -66,10 +67,10 @@ interface TierDisplay {
 }
 
 const TIER_NAMES = [
-  { name: "Bronze", emoji: "🥉" },
-  { name: "Silver", emoji: "🥈" },
-  { name: "Gold", emoji: "🥇" },
-  { name: "Diamond", emoji: "💎" },
+  { name: "Bronze", emoji: "🥉", code: "T1" },
+  { name: "Silver", emoji: "🥈", code: "T2" },
+  { name: "Gold", emoji: "🥇", code: "T3" },
+  { name: "Diamond", emoji: "💎", code: "T4" },
 ];
 
 export function VendingMachine() {
@@ -77,35 +78,62 @@ export function VendingMachine() {
   const [needsApproval, setNeedsApproval] = useState(false);
   const [tiers, setTiers] = useState<TierDisplay[]>([]);
   const [latestRequestId, setLatestRequestId] = useState<string | null>(null);
-  const [showPreparationModal, setShowPreparationModal] = useState(false);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const [winAmount, setWinAmount] = useState<string>("");
+  const [walletStatus, setWalletStatus] = useState<
+    "idle" | "preparing" | "ready" | "error"
+  >("idle");
+  const [walletData, setWalletData] = useState<any>(null);
+  const [preparingDots, setPreparingDots] = useState("");
+  const [codeInput, setCodeInput] = useState<string>("");
+  const [message, setMessage] = useState<string>("🎰 WELCOME TO VENDYZ 🎰");
+  const [usdcBalance, setUsdcBalance] = useState<number>(0);
+  const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
+  const { connect, connectors } = useConnect();
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  // Animated dots effect for preparing state
+  useEffect(() => {
+    if (walletStatus !== "preparing") return;
+    const interval = setInterval(() => {
+      setPreparingDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+    }, 500);
+    return () => clearInterval(interval);
+  }, [walletStatus]);
 
   // Contract write hooks
   const {
-    data: purchaseHash,
-    writeContract: writePurchase,
+    data: callsId,
+    sendCalls,
     isPending: isPurchasePending,
-  } = useWriteContract();
+  } = useSendCalls();
+
+  const { data: callsStatus } = useCallsStatus({
+    id: callsId?.id as string,
+    query: {
+      enabled: !!callsId,
+      refetchInterval: (query) =>
+        query.state.data?.status === "success" ? false : 1000,
+    },
+  });
+
+  const isPurchaseConfirming = callsStatus?.status === "pending";
+  const isPurchaseSuccess = callsStatus?.status === "success";
+
+  // Fallback for individual approval if needed
   const {
     data: approvalHash,
     writeContract: writeApproval,
     isPending: isApprovalPending,
   } = useWriteContract();
 
-  const { isLoading: isPurchaseConfirming, isSuccess: isPurchaseSuccess } =
-    useWaitForTransactionReceipt({
-      hash: purchaseHash,
-    });
-
   const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } =
     useWaitForTransactionReceipt({
       hash: approvalHash,
     });
 
-  // Track approval transaction status
+  // Track approval transaction status (fallback)
   useEffect(() => {
     if (approvalHash) {
       if (!isApprovalConfirming && !isApprovalSuccess) {
@@ -118,42 +146,66 @@ export function VendingMachine() {
     }
   }, [approvalHash, isApprovalConfirming, isApprovalSuccess]);
 
-  // Track purchase transaction status and extract requestId
+  // Track batch transaction status and extract requestId
   useEffect(() => {
-    if (purchaseHash) {
+    if (callsId && isPurchaseSuccess && callsStatus?.receipts?.[0]) {
       const tier = tiers.find((t) => t.id === selectedTier);
-      if (!isPurchaseConfirming && !isPurchaseSuccess) {
-        trackTransaction(
-          purchaseHash,
-          `Purchase ${tier?.name || "Wallet"} Tier`
-        );
-      } else if (isPurchaseConfirming) {
-        updateTransactionStatus(purchaseHash, "confirming");
-      } else if (isPurchaseSuccess) {
-        updateTransactionStatus(purchaseHash, "success");
-        // Extract requestId from transaction receipt
-        extractRequestId(purchaseHash);
-      }
+      trackTransaction(
+        callsStatus.receipts[0].transactionHash,
+        `Purchase ${tier?.name || "Wallet"} Tier`
+      );
+      // Extract requestId from transaction receipt
+      extractRequestIdFromReceipt(callsStatus.receipts[0].logs);
     }
-  }, [
-    purchaseHash,
-    isPurchaseConfirming,
-    isPurchaseSuccess,
-    selectedTier,
-    tiers,
-  ]);
+  }, [callsId, isPurchaseSuccess, callsStatus, selectedTier, tiers]);
+
+  // Poll wallet status after purchase
+  useEffect(() => {
+    if (!latestRequestId || walletStatus !== "preparing") return;
+
+    let pollInterval: NodeJS.Timeout | undefined;
+    let attempts = 0;
+    const maxAttempts = 60;
+
+    const checkWalletStatus = async () => {
+      attempts++;
+
+      if (attempts > maxAttempts) {
+        setWalletStatus("error");
+        if (pollInterval) clearInterval(pollInterval);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${API_URL}/api/wallet/${latestRequestId}/status`
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data.ready) {
+            setWalletStatus("ready");
+            if (pollInterval) clearInterval(pollInterval);
+          }
+        }
+      } catch (err) {
+        console.error("Error polling wallet status:", err);
+      }
+    };
+
+    pollInterval = setInterval(checkWalletStatus, 2000);
+    checkWalletStatus();
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [latestRequestId, walletStatus, API_URL]);
 
   // Extract requestId from PurchaseInitiated event
-  const extractRequestId = async (txHash: `0x${string}`) => {
-    if (!publicClient) return;
-
+  const extractRequestIdFromReceipt = (logs: any[]) => {
     try {
-      const receipt = await publicClient.getTransactionReceipt({
-        hash: txHash,
-      });
-
       // Find PurchaseInitiated event
-      for (const log of receipt.logs) {
+      for (const log of logs) {
         try {
           const decoded = decodeEventLog({
             abi: VendingMachineAbi,
@@ -164,7 +216,7 @@ export function VendingMachine() {
           if (decoded.eventName === "PurchaseInitiated") {
             const requestId = (decoded.args as any).requestId.toString();
             setLatestRequestId(requestId);
-            setShowAnimation(true);
+            setWalletStatus("preparing");
             console.log("Request ID extracted:", requestId);
             break;
           }
@@ -186,8 +238,8 @@ export function VendingMachine() {
     args: address ? [address] : undefined,
   });
 
-  // Read USDC balance
-  const { data: usdcBalance } = useReadContract({
+  // Read USDC allowance
+  const { data: usdcAllowance } = useReadContract({
     address: USDC_ADDRESS as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "allowance",
@@ -254,13 +306,13 @@ export function VendingMachine() {
 
   // Check if approval is needed when tier is selected
   useEffect(() => {
-    if (selectedTier && usdcBalance !== undefined) {
+    if (selectedTier && usdcAllowance !== undefined) {
       const tier = tiers.find((t) => t.id === selectedTier);
       if (tier) {
-        setNeedsApproval(usdcBalance < tier.price);
+        setNeedsApproval(usdcAllowance < tier.price);
       }
     }
-  }, [selectedTier, usdcBalance, tiers]);
+  }, [selectedTier, usdcAllowance, tiers]);
 
   // Reset approval state after successful approval
   useEffect(() => {
@@ -269,31 +321,16 @@ export function VendingMachine() {
     }
   }, [isApprovalSuccess]);
 
-  const handleApprove = async () => {
+  const handleApproveAndPurchase = async () => {
     if (!selectedTier) return;
     const tier = tiers.find((t) => t.id === selectedTier);
     if (!tier) return;
 
-    try {
-      writeApproval({
-        address: USDC_ADDRESS as `0x${string}`,
-        abi: ERC20_ABI,
-        functionName: "approve",
-        args: [VendingMachineAddress as `0x${string}`, tier.price * BigInt(10)], // Approve 10x for future purchases
-      });
-    } catch (error: any) {
-      const errorMsg = parseContractError(error);
-      showError(errorMsg.title, errorMsg.message, errorMsg.action);
-    }
-  };
-
-  const handlePurchase = async () => {
     // Client-side validation
-    const tier = tiers.find((t) => t.id === selectedTier);
     const validationError = validatePurchase(
       selectedTier,
       isConnected,
-      usdcBalance as bigint | undefined,
+      usdcAllowance as bigint | undefined,
       tier?.price
     );
 
@@ -307,11 +344,29 @@ export function VendingMachine() {
     }
 
     try {
-      writePurchase({
-        address: VendingMachineAddress as `0x${string}`,
-        abi: VendingMachineAbi,
-        functionName: "purchase",
-        args: [selectedTier!],
+      // Batch approve and purchase together
+      await sendCalls({
+        calls: [
+          {
+            to: USDC_ADDRESS as `0x${string}`,
+            data: encodeFunctionData({
+              abi: ERC20_ABI,
+              functionName: "approve",
+              args: [
+                VendingMachineAddress as `0x${string}`,
+                tier.price * BigInt(10),
+              ],
+            }),
+          },
+          {
+            to: VendingMachineAddress as `0x${string}`,
+            data: encodeFunctionData({
+              abi: VendingMachineAbi,
+              functionName: "purchase",
+              args: [selectedTier!],
+            }),
+          },
+        ],
       });
     } catch (error: any) {
       const errorMsg = parseContractError(error);
@@ -319,237 +374,424 @@ export function VendingMachine() {
     }
   };
 
+  // Fallback for wallets that don't support batch calls
+  const handleApprove = async () => {
+    if (!selectedTier) return;
+    const tier = tiers.find((t) => t.id === selectedTier);
+    if (!tier) return;
+
+    try {
+      writeApproval({
+        address: USDC_ADDRESS as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [VendingMachineAddress as `0x${string}`, tier.price * BigInt(10)],
+      });
+    } catch (error: any) {
+      const errorMsg = parseContractError(error);
+      showError(errorMsg.title, errorMsg.message, errorMsg.action);
+    }
+  };
+
+  // Handle price input for tier selection
+  const handleCodeInput = (key: string) => {
+    setCodeInput(key);
+    setMessage(`🪙 ${key} USDC INSERTED 🪙`);
+
+    // Trigger coin animation
+    setShowCoinAnimation(true);
+    setTimeout(() => setShowCoinAnimation(false), 800);
+  };
+
+  // Clear code input
+  const handleClear = () => {
+    setCodeInput("");
+    setSelectedTier(null);
+    setMessage(" INSERT COIN 🪙");
+  };
+
+  // Handle purchase with price selection
+  const handleSpinNow = () => {
+    if (!codeInput) {
+      setMessage("⚠️ INSERT COIN FIRST ⚠️");
+      setTimeout(() => setMessage("🪙 INSERT COIN 🪙"), 2000);
+      return;
+    }
+
+    const priceValue = Number(codeInput);
+    const tier = tiers.find(
+      (t) => Number(formatUnits(t.price, 6)) === priceValue
+    );
+    if (!tier) {
+      setMessage("❌ INVALID AMOUNT ❌");
+      setTimeout(() => {
+        setCodeInput("");
+        setMessage(" INSERT COIN 🪙");
+      }, 2000);
+      return;
+    }
+
+    setSelectedTier(tier.id);
+
+    if (needsApproval) {
+      setMessage(
+        `💳 APPROVE & PURCHASE ${Number(formatUnits(tier.price, 6))} USDC 💳`
+      );
+      handleApproveAndPurchase();
+    } else {
+      handleApproveAndPurchase();
+    }
+  };
+
+  // Connect Wallet Button Component
+  const ConnectWalletButton = () => (
+    <div className="space-y-2">
+      <button
+        onClick={() => connect({ connector: connectors[1] })}
+        className="w-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 hover:from-yellow-400 hover:via-yellow-300 hover:to-yellow-400 text-black py-3 md:py-4 rounded-lg transition-all shadow-2xl hover:shadow-yellow-500/50 flex items-center justify-center gap-2 border-2 border-yellow-600 text-base md:text-lg font-bold"
+      >
+        <Wallet size={18} className="md:w-5 md:h-5" />
+        🔌 CONNECT COINBASE WALLET 🔌
+      </button>
+      <button
+        onClick={() => connect({ connector: connectors[2] })}
+        className="w-full bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500 hover:from-orange-400 hover:via-orange-300 hover:to-orange-400 text-white py-3 md:py-4 rounded-lg transition-all shadow-2xl hover:shadow-orange-500/50 flex items-center justify-center gap-2 border-2 border-orange-600 text-base md:text-lg font-bold"
+      >
+        <Wallet size={18} className="md:w-5 md:h-5" />
+        🦊 CONNECT METAMASK 🦊
+      </button>
+    </div>
+  );
+
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2" style={{ color: "#000000" }}>
-          🎰 Vendyz
-        </h1>
-        <p style={{ color: "#000000", opacity: 0.7 }}>
-          Anonymous Wallet Vending Machine
-        </p>
-        {isConnected &&
-          purchaseCount !== undefined &&
-          purchaseCount !== null && (
-            <p className="text-sm text-gray-500 mt-2">
-              Your purchases: {purchaseCount.toString()}
+    <div className="w-full max-w-4xl mx-auto">
+      {/* Vending Machine Frame */}
+      <div className="bg-gradient-to-b from-red-600 via-red-700 to-red-950 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-2xl border-4 md:border-8 border-yellow-500 relative overflow-hidden">
+        {/* Animated background lights */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 animate-pulse"></div>
+        </div>
+
+        {/* Corner decorations */}
+        <div className="absolute top-2 md:top-4 left-2 md:left-4 text-yellow-400 animate-pulse">
+          <Star className="w-4 h-4 md:w-8 md:h-8 fill-yellow-400" />
+        </div>
+        <div className="absolute top-2 md:top-4 right-2 md:right-4 text-yellow-400 animate-pulse">
+          <Star className="w-4 h-4 md:w-8 md:h-8 fill-yellow-400" />
+        </div>
+
+        {/* Top Sign */}
+        <div className="bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 text-red-900 text-center py-3 md:py-4 rounded-lg md:rounded-xl mb-4 md:mb-6 shadow-2xl border-2 md:border-4 border-yellow-500 relative animate-pulse">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+          <h1 className="tracking-widest text-xl md:text-3xl relative z-10">
+            🎰 VENDYZ 🎰
+          </h1>
+          <p className="text-xs md:text-sm tracking-wider relative z-10">
+            ANONYMOUS WALLET CASINO
+          </p>
+          {isConnected && purchaseCount !== undefined && (
+            <p className="text-xs mt-1 relative z-10">
+              Purchases: {purchaseCount?.toString() || "0"}
             </p>
           )}
-      </div>
+        </div>
 
-      {/* Success Messages */}
-      {isPurchaseSuccess && (
-        <div
-          className="px-4 py-3 rounded mb-6"
-          style={{
-            backgroundColor: "#d4e7a0",
-            border: "2px solid #b8d47a",
-            color: "#000000",
-          }}
-        >
-          <p className="font-bold">Purchase Successful! 🎉</p>
-          {latestRequestId ? (
-            <div className="mt-2 space-y-2">
-              <p className="text-sm">
-                Your wallet is being prepared by our backend service.
-              </p>
-              <div className="bg-white/50 dark:bg-gray-800/50 p-3 rounded border border-green-500">
-                <p className="text-xs font-semibold mb-1">Your Request ID:</p>
-                <p className="font-mono text-sm font-bold">{latestRequestId}</p>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(latestRequestId);
-                  }}
-                  className="mt-2 text-xs underline hover:no-underline"
+        {/* Display Screen */}
+        <div className="bg-black text-yellow-300 p-3 md:p-4 rounded-lg mb-4 md:mb-6 font-mono text-center shadow-inner border-2 md:border-4 border-red-800 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-red-600/20 animate-pulse"></div>
+          <div className="text-sm md:text-2xl tracking-wide relative z-10 animate-pulse">
+            {message}
+          </div>
+        </div>
+
+        {/* Wallet Tiers Display Area */}
+        <div className="bg-gradient-to-b from-black via-red-950 to-black rounded-lg md:rounded-xl p-2 md:p-3 mb-3 md:mb-4 shadow-2xl border-2 border-yellow-500 relative">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 via-transparent to-yellow-400/30 animate-pulse"></div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-2 relative z-10">
+            {tiers.map((tier) => {
+              const priceUSDC = Number(formatUnits(tier.price, 6));
+              const minValueUSDC = Number(formatUnits(tier.minValue, 6));
+              const maxValueUSDC = Number(formatUnits(tier.maxValue, 6));
+
+              return (
+                <div
+                  key={tier.id}
+                  className="bg-gradient-to-b from-red-800 via-red-900 to-black rounded-md md:rounded-lg p-1.5 md:p-2 shadow-xl border-2 border-yellow-500 flex flex-col items-center justify-center hover:shadow-yellow-500/50 hover:scale-105 transition-all hover:border-yellow-300 relative overflow-hidden group"
                 >
-                  📋 Copy Request ID
+                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                  <div className="text-[9px] text-yellow-400 mb-0.5 relative z-10 font-bold">
+                    {TIER_NAMES[tier.id - 1].code}
+                  </div>
+                  <div className="text-xl md:text-3xl mb-0.5 relative z-10">
+                    {tier.emoji}
+                  </div>
+                  <div className="text-[10px] md:text-xs text-yellow-400 font-bold relative z-10">
+                    🪙 {priceUSDC}
+                  </div>
+                  <div className="text-[8px] md:text-[10px] text-green-400 relative z-10 mt-0.5">
+                    WIN ${minValueUSDC}-${maxValueUSDC}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Control Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 relative z-10">
+          {/* Left Side - Keypad & Controls */}
+          <div className="space-y-3 md:space-y-4">
+            {/* Keypad */}
+            <div className="bg-black rounded-lg p-2 md:p-3 border-2 border-yellow-500 shadow-xl relative overflow-hidden">
+              {/* Coin insertion animation */}
+              {showCoinAnimation && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                  <div className="text-6xl md:text-8xl animate-[coinDrop_0.8s_ease-in]">
+                    🪙
+                  </div>
+                </div>
+              )}
+
+              <div className="text-yellow-400 text-[10px] md:text-xs mb-1 md:mb-2 text-center tracking-wider">
+                {codeInput
+                  ? `🪙 ${codeInput} USDC SELECTED 🪙`
+                  : "🪙 INSERT COIN 🪙"}
+              </div>
+
+              {!codeInput ? (
+                <div className="grid grid-cols-2 gap-1.5 md:gap-2">
+                  {["5", "20", "50", "100"].map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => handleCodeInput(key)}
+                      className="bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-black py-2 md:py-3 rounded-lg transition-all shadow-lg hover:shadow-yellow-500/50 border-2 border-yellow-300 text-base md:text-xl font-bold"
+                    >
+                      🪙 {key}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-4 md:py-6">
+                  <div className="bg-gradient-to-b from-green-500 to-green-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg border-4 border-green-300 shadow-2xl shadow-green-500/50">
+                    <div className="text-3xl md:text-5xl font-bold flex items-center gap-2">
+                      🪙 {codeInput}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="bg-black rounded-lg p-2 md:p-3 border-2 border-yellow-500 shadow-xl">
+              <div className="space-y-1.5 md:space-y-2">
+                {!isConnected ? (
+                  <ConnectWalletButton />
+                ) : (
+                  <button
+                    onClick={handleSpinNow}
+                    disabled={isPurchasePending || isPurchaseConfirming}
+                    className="w-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 hover:from-yellow-400 hover:via-yellow-300 hover:to-yellow-400 text-red-900 py-2 md:py-3 rounded-lg transition-all shadow-2xl hover:shadow-yellow-500/50 flex items-center justify-center gap-2 border-2 border-yellow-600 text-sm md:text-base animate-pulse"
+                  >
+                    {isPurchasePending || isPurchaseConfirming ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin">⏳</span>
+                        {isPurchasePending ? "PURCHASING..." : "CONFIRMING..."}
+                      </span>
+                    ) : (
+                      <>
+                        <Wallet size={18} className="md:w-5 md:h-5" />
+                        SPIN NOW!
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={handleClear}
+                  className="w-full bg-gradient-to-b from-orange-600 to-orange-800 hover:from-orange-500 hover:to-orange-700 text-white py-1.5 md:py-2 rounded-lg transition-all shadow-lg hover:shadow-orange-500/50 flex items-center justify-center gap-2 border-2 border-orange-400 text-xs md:text-sm"
+                >
+                  <XCircle size={14} className="md:w-4 md:h-4" />
+                  CLEAR
                 </button>
               </div>
-              <p className="text-xs">
-                💡 Go to the <strong>Wallet</strong> tab to retrieve your funded
-                wallet.
-                <br />
-                ⏱️ This usually takes 1-2 minutes.
-              </p>
             </div>
-          ) : (
-            <p className="text-sm">
-              Your wallet is being prepared. Check the Wallet tab in a moment!
-            </p>
-          )}
-        </div>
-      )}
-      {isApprovalSuccess && (
-        <div
-          className="px-4 py-3 rounded mb-6"
-          style={{
-            backgroundColor: "#e8f5d0",
-            border: "2px solid #d4e7a0",
-            color: "#000000",
-          }}
-        >
-          <p className="font-bold">Approval Successful! ✅</p>
-          <p className="text-sm">
-            You can now purchase wallets. Click the purchase button below.
-          </p>
-        </div>
-      )}
+          </div>
 
-      {/* Tier Cards */}
-      {tiers.length === 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <TierCardSkeleton />
-          <TierCardSkeleton />
-          <TierCardSkeleton />
-          <TierCardSkeleton />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {tiers.map((tier) => {
-            const priceUSDC = Number(formatUnits(tier.price, 6));
-            const minValueUSDC = Number(formatUnits(tier.minValue, 6));
-            const maxValueUSDC = Number(formatUnits(tier.maxValue, 6));
-            const avgValue = (minValueUSDC + maxValueUSDC) / 2;
-            const edge = ((avgValue / priceUSDC - 1) * 100).toFixed(0);
-
-            return (
-              <button
-                key={tier.id}
-                onClick={() => setSelectedTier(tier.id)}
-                disabled={!tier.active}
-                className={`p-6 rounded-lg border-2 transition-all duration-200 text-left ${
-                  !tier.active ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-                style={{
-                  backgroundColor:
-                    selectedTier === tier.id ? "#f5ffdb" : "#EEFFBE",
-                  borderColor: selectedTier === tier.id ? "#d4e7a0" : "#c8d99a",
-                  color: "#000000",
-                  transform:
-                    selectedTier === tier.id ? "scale(1.05)" : "scale(1)",
-                  boxShadow:
-                    selectedTier === tier.id
-                      ? "0 10px 15px -3px rgba(0,0,0,0.1)"
-                      : "none",
-                }}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl">{tier.emoji}</span>
-                    <h3 className="text-xl font-bold">{tier.name}</h3>
+          {/* Right Side - Status Display */}
+          <div>
+            <div className="bg-black rounded-lg p-3 md:p-4 border-2 md:border-4 border-yellow-500 min-h-[400px] md:min-h-[500px] shadow-2xl relative overflow-hidden">
+              {/* Purchasing/Confirming */}
+              {(isPurchasePending || isPurchaseConfirming) && (
+                <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/80">
+                  <div className="text-center">
+                    <div className="text-4xl md:text-6xl mb-4 animate-spin">
+                      🎰
+                    </div>
+                    <div className="text-yellow-400 text-lg md:text-2xl animate-pulse">
+                      {isPurchasePending ? "PURCHASING..." : "CONFIRMING..."}
+                    </div>
                   </div>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    ${priceUSDC}
-                  </span>
                 </div>
-                <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                  <p>
-                    💰 Wallet value: ${minValueUSDC} - ${maxValueUSDC} USDC
-                  </p>
-                  <p>📊 Expected return: ${avgValue.toFixed(1)} USDC</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                    ~{edge}% house edge
+              )}
+
+              {/* Preparing Wallet */}
+              {walletStatus === "preparing" && (
+                <div className="h-full flex flex-col items-center justify-center p-4 space-y-4">
+                  <div className="relative">
+                    <div className="text-6xl md:text-8xl animate-bounce">
+                      🎉
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-20 h-20 md:w-24 md:h-24 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  </div>
+
+                  <div className="text-center">
+                    <h3 className="text-yellow-400 text-xl md:text-2xl font-bold mb-1">
+                      CONGRATULATIONS!
+                    </h3>
+                    <p className="text-yellow-300 text-sm md:text-base">
+                      Preparing your rewards{preparingDots}
+                    </p>
+                  </div>
+
+                  <div className="w-full max-w-sm space-y-2">
+                    <div className="flex items-center gap-2 text-xs md:text-sm">
+                      <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <span className="text-green-400">Purchase confirmed</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs md:text-sm">
+                      <div className="w-4 h-4 rounded-full bg-yellow-500 animate-pulse flex-shrink-0"></div>
+                      <span className="text-yellow-400 font-semibold">
+                        Generating wallet...
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs md:text-sm">
+                      <div className="w-4 h-4 rounded-full bg-gray-600 flex-shrink-0"></div>
+                      <span className="text-gray-500">Funding tokens</span>
+                    </div>
+                  </div>
+
+                  <p className="text-yellow-500 text-xs">
+                    ⏱️ Usually takes 30-60 seconds
                   </p>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Action Buttons */}
-      {selectedTier && (
-        <div className="text-center space-y-3">
-          {!isConnected ? (
-            <p className="text-gray-500">
-              Please connect your wallet to continue
-            </p>
-          ) : needsApproval ? (
-            <Button
-              onClick={handleApprove}
-              disabled={isApprovalPending || isApprovalConfirming}
-              className="w-full md:w-auto px-8 py-4 text-lg font-semibold"
-            >
-              {isApprovalPending || isApprovalConfirming ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  {isApprovalPending ? "Approving..." : "Confirming..."}
-                </span>
-              ) : (
-                `Approve USDC`
               )}
-            </Button>
-          ) : (
-            <Button
-              onClick={handlePurchase}
-              disabled={isPurchasePending || isPurchaseConfirming}
-              className="w-full md:w-auto px-8 py-4 text-lg font-semibold"
-            >
-              {isPurchasePending || isPurchaseConfirming ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">⏳</span>
-                  {isPurchasePending ? "Purchasing..." : "Confirming..."}
-                </span>
-              ) : (
-                `Purchase ${tiers.find((t) => t.id === selectedTier)?.name} for $${Number(formatUnits(tiers.find((t) => t.id === selectedTier)?.price || BigInt(0), 6))}`
-              )}
-            </Button>
-          )}
-        </div>
-      )}
 
-      {/* How it Works */}
-      <div
-        className="mt-12 p-6 rounded-lg"
-        style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
-      >
-        <h2 className="text-2xl font-bold mb-4" style={{ color: "#000000" }}>
-          🎯 How It Works
-        </h2>
-        <ol className="space-y-3" style={{ color: "#000000", opacity: 0.9 }}>
-          <li className="flex gap-3">
-            <span className="font-bold text-blue-600">1.</span>
-            <span>Choose your tier and pay with USDC</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="font-bold text-blue-600">2.</span>
-            <span>Chainlink VRF generates provably fair randomness</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="font-bold text-blue-600">3.</span>
-            <span>Receive a pre-funded anonymous Ethereum wallet</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="font-bold text-blue-600">4.</span>
-            <span>Wallet contains random amount of USDC + bonus tokens</span>
-          </li>
-        </ol>
+              {/* Wallet Ready */}
+              {walletStatus === "ready" && (
+                <div className="h-full flex flex-col items-center justify-center p-4 space-y-4">
+                  <div className="text-6xl md:text-8xl animate-pulse">✅</div>
+
+                  <div className="text-center">
+                    <h3 className="text-green-400 text-2xl md:text-3xl font-bold mb-2">
+                      WALLET READY!
+                    </h3>
+                    <p className="text-green-300 text-sm md:text-base">
+                      Your anonymous wallet is funded and ready
+                    </p>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-green-900 to-green-800 border-2 border-green-400 rounded-lg p-4 w-full max-w-sm">
+                    <div className="text-center space-y-3">
+                      <div className="flex items-center justify-center gap-2 text-yellow-400 text-xs mb-2">
+                        <Star className="w-3 h-3 fill-yellow-400" />
+                        <span>ALL SET!</span>
+                        <Star className="w-3 h-3 fill-yellow-400" />
+                      </div>
+                      <p className="text-green-300 text-sm">
+                        Go to the <span className="font-bold">WALLET TAB</span>{" "}
+                        to retrieve your wallet
+                      </p>
+                      <button
+                        onClick={() => {
+                          setWalletStatus("idle");
+                          setLatestRequestId(null);
+                          setCodeInput("");
+                          setSelectedTier(null);
+                        }}
+                        className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white py-2 rounded-lg transition-all text-sm font-bold border-2 border-green-400"
+                      >
+                        ✨ DONE ✨
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error State */}
+              {walletStatus === "error" && (
+                <div className="h-full flex flex-col items-center justify-center p-4 space-y-4">
+                  <div className="text-6xl">⚠️</div>
+
+                  <div className="text-center">
+                    <h3 className="text-red-400 text-xl md:text-2xl font-bold mb-2">
+                      TAKING LONGER
+                    </h3>
+                    <p className="text-red-300 text-sm">
+                      Your wallet is still being prepared
+                    </p>
+                  </div>
+
+                  <div className="bg-yellow-900/50 border-2 border-yellow-600 rounded-lg p-4 w-full max-w-sm">
+                    <p className="text-yellow-300 text-xs text-center mb-2">
+                      Check the <span className="font-bold">WALLET TAB</span> in
+                      a moment to retrieve your wallet
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setWalletStatus("idle");
+                      setLatestRequestId(null);
+                    }}
+                    className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-bold"
+                  >
+                    CLOSE
+                  </button>
+                </div>
+              )}
+
+              {/* Idle State */}
+              {walletStatus === "idle" &&
+                !isPurchasePending &&
+                !isPurchaseConfirming && (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-gray-600 text-center">
+                      <div className="text-4xl md:text-6xl mb-4 opacity-30">
+                        🎰
+                      </div>
+                      <div className="text-xs">
+                        STATUS
+                        <br />
+                        DISPLAY
+                      </div>
+                    </div>
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom decoration */}
+        <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 animate-pulse"></div>
       </div>
-
-      {/* Vending Machine Animation */}
-      {showAnimation && selectedTier && latestRequestId && (
-        <VendingMachineAnimation
-          tier={tiers.find((t) => t.id === selectedTier)!}
-          requestId={latestRequestId}
-          onComplete={(amount) => {
-            setWinAmount(amount);
-            setShowAnimation(false);
-            setShowPreparationModal(true);
-          }}
-        />
-      )}
-
-      {/* Wallet Preparation Modal */}
-      {showPreparationModal && latestRequestId && (
-        <WalletPreparationModal
-          requestId={latestRequestId}
-          onClose={() => {
-            setShowPreparationModal(false);
-            setLatestRequestId(null);
-          }}
-        />
-      )}
     </div>
   );
 }
