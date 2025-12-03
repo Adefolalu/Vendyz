@@ -47,6 +47,13 @@ const ERC20_ABI = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
 
 interface ContractTier {
@@ -85,7 +92,6 @@ export function VendingMachine() {
   const [preparingDots, setPreparingDots] = useState("");
   const [codeInput, setCodeInput] = useState<string>("");
   const [message, setMessage] = useState<string>("🎰 WELCOME TO VENDYZ 🎰");
-  const [usdcBalance, setUsdcBalance] = useState<number>(0);
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
@@ -238,6 +244,14 @@ export function VendingMachine() {
     args: address ? [address] : undefined,
   });
 
+  // Read USDC balance
+  const { data: usdcBalanceData } = useReadContract({
+    address: USDC_ADDRESS as `0x${string}`,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+  });
+
   // Read USDC allowance
   const { data: usdcAllowance } = useReadContract({
     address: USDC_ADDRESS as `0x${string}`,
@@ -330,7 +344,7 @@ export function VendingMachine() {
     const validationError = validatePurchase(
       selectedTier,
       isConnected,
-      usdcAllowance as bigint | undefined,
+      usdcBalanceData as bigint | undefined,
       tier?.price
     );
 

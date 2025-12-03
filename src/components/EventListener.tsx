@@ -21,6 +21,21 @@ interface Notification {
 
 export function EventListener() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const addNotification = (
     type: "success" | "info" | "warning",
@@ -48,6 +63,8 @@ export function EventListener() {
     address: VendingMachineAddress as `0x${string}`,
     abi: VendingMachineAbi,
     eventName: "WalletReady",
+    enabled: isOnline,
+    pollingInterval: 4000, // Poll every 4 seconds instead of default 1s
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { requestId: bigint };
@@ -58,12 +75,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: VendingMachineAddress as `0x${string}`,
     abi: VendingMachineAbi,
     eventName: "PurchaseInitiated",
+    enabled: isOnline,
+    pollingInterval: 4000,
     onLogs(logs) {
       logs.forEach((log) => {
         addNotification(
@@ -73,12 +98,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: VendingMachineAddress as `0x${string}`,
     abi: VendingMachineAbi,
     eventName: "PurchaseRefunded",
+    enabled: isOnline,
+    pollingInterval: 4000,
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { requestId: bigint };
@@ -89,6 +122,12 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   // SponsorAuction Events
@@ -96,6 +135,8 @@ export function EventListener() {
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     eventName: "AuctionFinalized",
+    enabled: isOnline,
+    pollingInterval: 8000, // Less frequent for auction events (8s)
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { auctionId: bigint };
@@ -106,12 +147,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     eventName: "BidPlaced",
+    enabled: isOnline,
+    pollingInterval: 8000,
     onLogs(logs) {
       logs.forEach((log) => {
         addNotification(
@@ -121,12 +170,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     eventName: "SponsorAdded",
+    enabled: isOnline,
+    pollingInterval: 8000,
     onLogs(logs) {
       logs.forEach((log) => {
         addNotification(
@@ -136,6 +193,12 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   // RaffleManager Events
@@ -143,6 +206,8 @@ export function EventListener() {
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
     eventName: "RaffleCreated",
+    enabled: isOnline,
+    pollingInterval: 10000, // Raffle events are less frequent (10s)
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { raffleId: bigint };
@@ -153,12 +218,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
     eventName: "WinnerSelected",
+    enabled: isOnline,
+    pollingInterval: 10000,
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { raffleId: bigint };
@@ -169,12 +242,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
     eventName: "TicketsPurchased",
+    enabled: isOnline,
+    pollingInterval: 10000,
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { raffleId: bigint; amount: bigint };
@@ -185,12 +266,20 @@ export function EventListener() {
         );
       });
     },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
+    },
   });
 
   useWatchContractEvent({
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
     eventName: "RaffleFilled",
+    enabled: isOnline,
+    pollingInterval: 10000,
     onLogs(logs) {
       logs.forEach((log) => {
         const args = (log as any).args as { raffleId: bigint };
@@ -200,6 +289,12 @@ export function EventListener() {
           `Raffle #${args.raffleId} is now full! Winner will be selected soon.`
         );
       });
+    },
+    onError(error) {
+      console.warn(
+        "EventListener: Network error, will retry when online",
+        error.message
+      );
     },
   });
 
