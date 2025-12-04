@@ -21,6 +21,7 @@ import {
 } from "~/components/TransactionTracker";
 import { WalletPreparationModal } from "~/components/WalletPreparationModal";
 import { VendingMachineAnimation } from "~/components/VendingMachineAnimation";
+import { useTreasuryBalance } from "~/hooks/useTreasuryBalance";
 import { Wallet, XCircle, Zap, Star } from "lucide-react";
 
 // USDC on Base mainnet
@@ -98,6 +99,9 @@ export function VendingMachine() {
   const { connect, connectors } = useConnect();
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+  // Treasury balance hook
+  const { data: treasuryData, loading: treasuryLoading } = useTreasuryBalance();
 
   // Animated dots effect for preparing state
   useEffect(() => {
@@ -445,6 +449,17 @@ export function VendingMachine() {
       return;
     }
 
+    // Check if tier is fundable
+    const isTierFundable = treasuryData?.tiers?.[tier.id as 1 | 2 | 3 | 4]?.fundable ?? true;
+    if (!isTierFundable) {
+      setMessage("❌ TIER SOLD OUT ❌");
+      setTimeout(() => {
+        setCodeInput("");
+        setMessage("🪙 INSERT COIN 🪙");
+      }, 2000);
+      return;
+    }
+
     setSelectedTier(tier.id);
 
     if (needsApproval) {
@@ -531,12 +546,27 @@ export function VendingMachine() {
               const minValueUSDC = Number(formatUnits(tier.minValue, 6));
               const maxValueUSDC = Number(formatUnits(tier.maxValue, 6));
 
+              // Check if tier is fundable from treasury
+              const isTierFundable = treasuryData?.tiers?.[tier.id as 1 | 2 | 3 | 4]?.fundable ?? true;
+              const isDisabled = !isTierFundable;
+
               return (
                 <div
                   key={tier.id}
-                  className="bg-gradient-to-b from-red-800 via-red-900 to-black rounded-md md:rounded-lg p-1.5 md:p-2 shadow-xl border-2 border-yellow-500 flex flex-col items-center justify-center hover:shadow-yellow-500/50 hover:scale-105 transition-all hover:border-yellow-300 relative overflow-hidden group"
+                  className={`bg-gradient-to-b from-red-800 via-red-900 to-black rounded-md md:rounded-lg p-1.5 md:p-2 shadow-xl border-2 flex flex-col items-center justify-center relative overflow-hidden group transition-all ${
+                    isDisabled
+                      ? "border-gray-600 opacity-50 cursor-not-allowed"
+                      : "border-yellow-500 hover:shadow-yellow-500/50 hover:scale-105 hover:border-yellow-300"
+                  }`}
+                  title={isDisabled ? "Insufficient treasury balance for this tier" : ""}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  {isDisabled && (
+                    <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">
+                      <div className="text-red-500 text-xs md:text-sm font-bold">SOLD OUT</div>
+                    </div>
+                  )}
+                  
+                  <div className={`absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent opacity-0 transition-opacity ${!isDisabled && "group-hover:opacity-100"}`}></div>
 
                   <div className="text-[9px] text-yellow-400 mb-0.5 relative z-10 font-bold">
                     {TIER_NAMES[tier.id - 1].code}
@@ -579,15 +609,25 @@ export function VendingMachine() {
 
               {!codeInput ? (
                 <div className="grid grid-cols-2 gap-1.5 md:gap-2">
-                  {["5", "20", "50", "100"].map((key) => (
-                    <button
-                      key={key}
-                      onClick={() => handleCodeInput(key)}
-                      className="bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-black py-2 md:py-3 rounded-lg transition-all shadow-lg hover:shadow-yellow-500/50 border-2 border-yellow-300 text-base md:text-xl font-bold"
-                    >
-                      🪙 {key}
-                    </button>
-                  ))}
+                  {["5", "20", "50", "100"].map((key, index) => {
+                    const tierId = index + 1;
+                    const isTierFundable = treasuryData?.tiers?.[tierId as 1 | 2 | 3 | 4]?.fundable ?? true;
+                    
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleCodeInput(key)}
+                        disabled={!isTierFundable}
+                        className={`py-2 md:py-3 rounded-lg transition-all shadow-lg border-2 text-base md:text-xl font-bold ${
+                          isTierFundable
+                            ? "bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-black hover:shadow-yellow-500/50 border-yellow-300 cursor-pointer"
+                            : "bg-gradient-to-b from-gray-500 to-gray-700 text-gray-400 border-gray-600 cursor-not-allowed opacity-50"
+                        }`}
+                      >
+                        🪙 {key}
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex items-center justify-center py-4 md:py-6">
