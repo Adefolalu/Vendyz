@@ -78,10 +78,10 @@ export function WalletTab() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
+    <div className="w-full max-w-2xl mx-auto p-4">
       {/* Wallet Connection Section */}
-      <div className="space-y-6">
-        <div className="space-y-3 max-w-md mx-auto">
+      <div className="space-y-4">
+        <div className="space-y-2 max-w-sm mx-auto">
           {isConnected ? (
             <Button onClick={() => disconnect()} className="w-full">
               Disconnect Wallet
@@ -94,7 +94,7 @@ export function WalletTab() {
               Connect Wallet
             </Button>
           ) : (
-            <div className="space-y-3 w-full">
+            <div className="space-y-2 w-full">
               <Button
                 onClick={() => connect({ connector: connectors[1] })}
                 className="w-full"
@@ -113,19 +113,19 @@ export function WalletTab() {
 
         {/* Wallet Retrieval Section */}
         {isConnected && (
-          <div className="mt-8 max-w-md mx-auto">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2">
+          <div className="mt-6 max-w-sm mx-auto">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold mb-1">
                 🔓 Retrieve Your Wallet
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <p className="text-gray-600 dark:text-gray-400 text-xs">
                 Enter your purchase request ID to access your wallet
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-xs font-medium mb-1">
                   Request ID
                 </label>
                 <input
@@ -133,23 +133,23 @@ export function WalletTab() {
                   value={requestId}
                   onChange={(e) => setRequestId(e.target.value)}
                   placeholder="Enter request ID"
-                  className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:border-blue-500 dark:bg-gray-800 dark:text-white text-sm"
                 />
               </div>
 
               <Button
                 onClick={() => setShowExport(true)}
                 disabled={!requestId}
-                className="w-full py-3"
+                className="w-full py-2"
               >
                 Retrieve Wallet
               </Button>
 
-              <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <h3 className="font-bold text-yellow-900 dark:text-yellow-300 mb-2 text-sm">
+              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <h3 className="font-bold text-yellow-900 dark:text-yellow-300 mb-1 text-xs">
                   ⚠️ Security Warning
                 </h3>
-                <ul className="text-xs text-yellow-800 dark:text-yellow-400 space-y-1">
+                <ul className="text-[10px] text-yellow-800 dark:text-yellow-400 space-y-0.5">
                   <li>• Only retrieve wallets on a secure, private device</li>
                   <li>• Never share your private key with anyone</li>
                   <li>• Credentials auto-delete after 5 minutes</li>

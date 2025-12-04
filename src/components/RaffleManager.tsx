@@ -397,19 +397,19 @@ export function RaffleManager() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-6">
+    <div className="w-full max-w-2xl mx-auto p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">🎟️ Raffle Manager</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h1 className="text-xl font-bold mb-1">🎄 Raffle Manager</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-xs">
             Create raffles or buy tickets to win!
           </p>
         </div>
         {isConnected && (
           <Button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-6 py-3"
+            className="px-3 py-1.5 text-xs bg-green-600 hover:bg-green-700"
           >
             {showCreateForm ? "Cancel" : "+ Create Raffle"}
           </Button>

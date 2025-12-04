@@ -25,13 +25,13 @@
 @tailwind utilities;
 
 :root {
-  --background: #eeffbe;
+  --background: #fef2f2; /* Christmas Snow/Red tint */
   --foreground: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #eeffbe;
+    --background: #fef2f2;
     --foreground: #000000;
   }
 }

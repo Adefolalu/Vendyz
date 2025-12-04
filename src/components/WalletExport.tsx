@@ -180,10 +180,10 @@ Request ID: ${requestId}
 
   if (!isConnected) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-6">
-        <div className="text-center py-12">
-          <p className="text-gray-500">
-            Connect your wallet to retrieve your purchased wallet
+      <div className="w-full max-w-2xl mx-auto p-4">
+        <div className="text-center py-8 bg-slate-900 rounded-lg border border-white/10">
+          <p className="text-slate-400 text-sm">
+            Connect your wallet to retrieve your purchased gift
           </p>
         </div>
       </div>
@@ -192,11 +192,13 @@ Request ID: ${requestId}
 
   if (loading) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-6">
-        <div className="text-center py-12">
-          <div className="animate-spin text-6xl mb-4">⏳</div>
-          <p className="text-xl font-semibold">Retrieving your wallet...</p>
-          <p className="text-gray-500 mt-2">Verifying ownership...</p>
+      <div className="w-full max-w-2xl mx-auto p-4">
+        <div className="text-center py-8 bg-slate-900 rounded-lg border border-white/10">
+          <div className="animate-spin text-4xl mb-2">⏳</div>
+          <p className="text-lg font-semibold text-green-400">
+            Retrieving your gift...
+          </p>
+          <p className="text-slate-500 text-xs mt-1">Verifying ownership...</p>
         </div>
       </div>
     );
@@ -204,15 +206,13 @@ Request ID: ${requestId}
 
   if (error) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-6">
-        <div className="bg-red-100 dark:bg-red-900 border-2 border-red-400 dark:border-red-600 rounded-lg p-6">
-          <h3 className="text-xl font-bold text-red-900 dark:text-red-300 mb-2">
-            ❌ Error
-          </h3>
-          <p className="text-red-800 dark:text-red-400">{error}</p>
+      <div className="w-full max-w-2xl mx-auto p-4">
+        <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
+          <h3 className="text-lg font-bold text-red-400 mb-1">❌ Error</h3>
+          <p className="text-red-300 text-sm">{error}</p>
           <Button
             onClick={() => (onClose ? onClose() : window.history.back())}
-            className="mt-4"
+            className="mt-3 text-xs py-1.5"
           >
             ← Go Back
           </Button>
@@ -223,9 +223,9 @@ Request ID: ${requestId}
 
   if (!wallet) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-6">
-        <div className="text-center py-12">
-          <p className="text-gray-500">No wallet data available</p>
+      <div className="w-full max-w-2xl mx-auto p-4">
+        <div className="text-center py-8 bg-slate-900 rounded-lg border border-white/10">
+          <p className="text-slate-400 text-sm">No gift data available</p>
         </div>
       </div>
     );
@@ -235,51 +235,43 @@ Request ID: ${requestId}
   const isExpiringSoon = timeRemaining !== null && timeRemaining < 60;
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 space-y-6">
+    <div className="w-full max-w-2xl mx-auto p-3 md:p-4 space-y-3 md:space-y-4 bg-slate-950 rounded-xl border border-white/10 shadow-2xl">
       {/* CRITICAL WARNING BANNER */}
       <div
-        className={`p-6 border-4 rounded-lg ${
+        className={`p-3 md:p-4 border-2 rounded-lg ${
           isExpiringSoon
-            ? "bg-red-100 dark:bg-red-900 border-red-500 animate-pulse"
-            : "bg-yellow-100 dark:bg-yellow-900 border-yellow-500"
+            ? "bg-red-900/30 border-red-500 animate-pulse"
+            : "bg-yellow-900/30 border-yellow-500"
         }`}
       >
-        <div className="flex items-start gap-4">
-          <div className="text-4xl">🚨</div>
+        <div className="flex items-start gap-3">
+          <div className="text-2xl md:text-3xl">🚨</div>
           <div className="flex-1">
             <h3
-              className={`text-2xl font-bold mb-2 ${
-                isExpiringSoon
-                  ? "text-red-900 dark:text-red-300"
-                  : "text-yellow-900 dark:text-yellow-300"
+              className={`text-lg md:text-xl font-bold mb-1 ${
+                isExpiringSoon ? "text-red-400" : "text-yellow-400"
               }`}
             >
               ⚠️ THIS PAGE IS SELF-DESTRUCTIVE!
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1">
               <p
-                className={`font-bold text-lg ${
-                  isExpiringSoon
-                    ? "text-red-800 dark:text-red-400"
-                    : "text-yellow-800 dark:text-yellow-400"
+                className={`font-bold text-sm md:text-base ${
+                  isExpiringSoon ? "text-red-300" : "text-yellow-300"
                 }`}
               >
                 Your private keys will be permanently deleted in:
               </p>
               <div
-                className={`text-5xl font-mono font-bold ${
-                  isExpiringSoon
-                    ? "text-red-900 dark:text-red-300"
-                    : "text-yellow-900 dark:text-yellow-300"
+                className={`text-3xl md:text-4xl font-mono font-bold ${
+                  isExpiringSoon ? "text-red-400" : "text-yellow-400"
                 }`}
               >
                 {timeRemaining !== null ? formatTime(timeRemaining) : "..."}
               </div>
               <ul
-                className={`text-sm space-y-1 mt-4 ${
-                  isExpiringSoon
-                    ? "text-red-800 dark:text-red-400"
-                    : "text-yellow-800 dark:text-yellow-400"
+                className={`text-[10px] md:text-xs space-y-0.5 mt-2 ${
+                  isExpiringSoon ? "text-red-300" : "text-yellow-300"
                 }`}
               >
                 <li>
@@ -295,20 +287,22 @@ Request ID: ${requestId}
       </div>
 
       {/* Wallet Address */}
-      <div className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-        <h3 className="font-bold text-lg mb-3">📍 Your New Wallet Address</h3>
+      <div className="p-3 md:p-4 border border-white/10 rounded-lg bg-slate-900">
+        <h3 className="font-bold text-sm md:text-base mb-2 text-cyan-300">
+          📍 Your New Wallet Address
+        </h3>
         <div className="flex gap-2">
           <input
             type="text"
             value={wallet.walletAddress}
             readOnly
-            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-900 font-mono text-sm"
+            className="flex-1 px-3 py-2 border border-slate-700 rounded bg-slate-950 font-mono text-xs md:text-sm text-slate-300"
           />
           <Button
             onClick={() =>
               copyToClipboard(wallet.walletAddress, "Wallet Address")
             }
-            className="px-6"
+            className="px-3 md:px-4 text-xs md:text-sm"
           >
             {copied === "Wallet Address" ? "✓ Copied" : "📋 Copy"}
           </Button>
@@ -316,65 +310,64 @@ Request ID: ${requestId}
       </div>
 
       {/* Private Key */}
-      <div className="p-6 border-4 border-red-500 rounded-lg bg-red-50 dark:bg-red-900/20">
-        <h3 className="font-bold text-xl text-red-900 dark:text-red-300 mb-3">
+      <div className="p-3 md:p-4 border-2 border-red-500 rounded-lg bg-red-900/10">
+        <h3 className="font-bold text-base md:text-lg text-red-400 mb-2">
           🔑 Private Key (CRITICAL - Keep Secret!)
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex gap-2">
             <input
               type={showPrivateKey ? "text" : "password"}
               value={wallet.privateKey}
               readOnly
-              className="flex-1 px-4 py-3 border-2 border-red-400 dark:border-red-600 rounded bg-white dark:bg-gray-800 font-mono text-sm"
+              className="flex-1 px-3 py-2 border border-red-500/50 rounded bg-slate-950 font-mono text-xs md:text-sm text-red-200"
             />
             <Button
               onClick={() => setShowPrivateKey(!showPrivateKey)}
-              className="px-6"
+              className="px-3 md:px-4 text-xs md:text-sm"
             >
               {showPrivateKey ? "🙈 Hide" : "👁️ Show"}
             </Button>
             <Button
               onClick={() => copyToClipboard(wallet.privateKey, "Private Key")}
-              className="px-6 bg-red-600 hover:bg-red-700"
+              className="px-3 md:px-4 bg-red-600 hover:bg-red-700 text-xs md:text-sm"
             >
               {copied === "Private Key" ? "✓ Copied" : "📋 Copy"}
             </Button>
           </div>
-          <p className="text-sm text-red-700 dark:text-red-400 font-semibold">
-            ⚠️ Anyone with this private key has FULL CONTROL of the wallet and
-            all funds!
+          <p className="text-xs text-red-400 font-semibold">
+            ⚠️ Anyone with this private key has FULL CONTROL of the wallet!
           </p>
         </div>
       </div>
 
       {/* Mnemonic Phrase */}
-      <div className="p-6 border-4 border-orange-500 rounded-lg bg-orange-50 dark:bg-orange-900/20">
-        <h3 className="font-bold text-xl text-orange-900 dark:text-orange-300 mb-3">
+      <div className="p-3 md:p-4 border-2 border-orange-500 rounded-lg bg-orange-900/10">
+        <h3 className="font-bold text-base md:text-lg text-orange-400 mb-2">
           📝 Recovery Phrase (Seed Phrase)
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex gap-2">
             <input
               type={showMnemonic ? "text" : "password"}
               value={wallet.mnemonic}
               readOnly
-              className="flex-1 px-4 py-3 border-2 border-orange-400 dark:border-orange-600 rounded bg-white dark:bg-gray-800 font-mono text-sm"
+              className="flex-1 px-3 py-2 border border-orange-500/50 rounded bg-slate-950 font-mono text-xs md:text-sm text-orange-200"
             />
             <Button
               onClick={() => setShowMnemonic(!showMnemonic)}
-              className="px-6"
+              className="px-3 md:px-4 text-xs md:text-sm"
             >
               {showMnemonic ? "🙈 Hide" : "👁️ Show"}
             </Button>
             <Button
               onClick={() => copyToClipboard(wallet.mnemonic, "Mnemonic")}
-              className="px-6 bg-orange-600 hover:bg-orange-700"
+              className="px-3 md:px-4 bg-orange-600 hover:bg-orange-700 text-xs md:text-sm"
             >
               {copied === "Mnemonic" ? "✓ Copied" : "📋 Copy"}
             </Button>
           </div>
-          <p className="text-sm text-orange-700 dark:text-orange-400">
+          <p className="text-xs text-orange-400">
             💡 Use this phrase to recover your wallet in any compatible wallet
             app
           </p>
@@ -382,33 +375,41 @@ Request ID: ${requestId}
       </div>
 
       {/* Token Holdings */}
-      <div className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
-        <h3 className="font-bold text-lg mb-4">💰 Token Holdings</h3>
-        <div className="space-y-3">
+      <div className="p-3 md:p-4 border border-white/10 rounded-lg bg-slate-900">
+        <h3 className="font-bold text-sm md:text-base mb-3 text-green-400">
+          💰 Token Holdings
+        </h3>
+        <div className="space-y-2">
           {wallet.tokens.map((token, index) => (
             <div
               key={index}
-              className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700"
+              className="flex justify-between items-center p-2 md:p-3 bg-slate-950 rounded border border-slate-800"
             >
               <div>
-                <p className="font-semibold text-lg">{token.symbol}</p>
-                <p className="text-xs text-gray-500 font-mono">
+                <p className="font-semibold text-sm md:text-base text-white">
+                  {token.symbol}
+                </p>
+                <p className="text-[10px] text-slate-500 font-mono">
                   {token.address.slice(0, 10)}...{token.address.slice(-8)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-semibold text-lg">{token.amount}</p>
-                <p className="text-sm text-green-600 dark:text-green-400">
+                <p className="font-semibold text-sm md:text-base text-white">
+                  {token.amount}
+                </p>
+                <p className="text-xs text-green-400">
                   ${token.valueUSD.toFixed(2)}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 pt-4 border-t-2 border-gray-300 dark:border-gray-600">
+        <div className="mt-3 pt-3 border-t border-slate-700">
           <div className="flex justify-between items-center">
-            <p className="font-bold text-xl">Total Value</p>
-            <p className="font-bold text-3xl text-green-600 dark:text-green-400">
+            <p className="font-bold text-base md:text-lg text-white">
+              Total Value
+            </p>
+            <p className="font-bold text-xl md:text-2xl text-green-400">
               ${wallet.actualValue.toFixed(2)}
             </p>
           </div>
@@ -416,31 +417,31 @@ Request ID: ${requestId}
       </div>
 
       {/* Export Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Button
           onClick={exportAsJSON}
-          className="w-full py-4 text-lg bg-blue-600 hover:bg-blue-700"
+          className="w-full py-2 md:py-3 text-sm md:text-base bg-blue-600 hover:bg-blue-700"
         >
           💾 Download JSON File
         </Button>
         <Button
           onClick={exportAsText}
-          className="w-full py-4 text-lg bg-purple-600 hover:bg-purple-700"
+          className="w-full py-2 md:py-3 text-sm md:text-base bg-purple-600 hover:bg-purple-700"
         >
           📄 Download Text File
         </Button>
       </div>
 
       {/* Confirmation Checkbox */}
-      <div className="p-6 border-2 border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-        <label className="flex items-start gap-3 cursor-pointer">
+      <div className="p-3 md:p-4 border border-blue-500/30 rounded-lg bg-blue-900/10">
+        <label className="flex items-start gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={hasConfirmed}
             onChange={(e) => setHasConfirmed(e.target.checked)}
-            className="mt-1 w-5 h-5"
+            className="mt-1 w-4 h-4"
           />
-          <span className="text-sm text-blue-900 dark:text-blue-300">
+          <span className="text-xs md:text-sm text-blue-300">
             <strong>I confirm that I have safely stored my private key</strong>{" "}
             and understand that it will be permanently deleted after 5 minutes.
             I cannot recover it after that time.
@@ -449,11 +450,11 @@ Request ID: ${requestId}
       </div>
 
       {/* Next Steps */}
-      <div className="p-6 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
-        <h3 className="font-bold text-lg text-green-900 dark:text-green-300 mb-3">
+      <div className="p-3 md:p-4 bg-green-900/10 border border-green-500/30 rounded-lg">
+        <h3 className="font-bold text-sm md:text-base text-green-400 mb-2">
           ✅ Next Steps
         </h3>
-        <ol className="text-sm text-green-800 dark:text-green-400 space-y-2">
+        <ol className="text-xs md:text-sm text-green-300 space-y-1.5">
           <li>
             <strong>1. Save Your Private Key</strong> - Copy it to a secure
             password manager or hardware wallet
@@ -481,7 +482,7 @@ Request ID: ${requestId}
       {hasConfirmed && onClose && (
         <Button
           onClick={onClose}
-          className="w-full py-4 text-lg bg-gray-600 hover:bg-gray-700"
+          className="w-full py-2 md:py-3 text-sm md:text-base bg-slate-700 hover:bg-slate-600"
         >
           ✓ I&apos;ve Saved Everything - Close
         </Button>

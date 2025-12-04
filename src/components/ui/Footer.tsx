@@ -13,54 +13,60 @@ export const Footer: React.FC<FooterProps> = ({
   showWallet = false,
 }) => (
   <div
-    className="fixed bottom-0 left-0 right-0 mx-4 mb-4 px-2 py-2 rounded-xl shadow-lg z-50 backdrop-blur-sm"
+    className="fixed bottom-0 left-0 right-0 mx-2 mb-2 px-1 py-1 rounded-lg shadow-lg z-50 backdrop-blur-sm"
     style={{
-      backgroundColor: "#EEFFBE",
-      borderColor: "#c8d99a",
+      backgroundColor: "#fef2f2",
+      borderColor: "#ef4444",
       borderWidth: "2px",
       borderStyle: "solid",
     }}
   >
-    <div className="flex justify-around items-center h-14">
+    <div className="flex justify-around items-center h-10 md:h-12">
       <button
         onClick={() => setActiveTab(Tab.Home)}
         className="flex flex-col items-center justify-center w-full h-full rounded-lg transition-all duration-200"
         style={{
-          backgroundColor: activeTab === Tab.Home ? "#e8f5d0" : "transparent",
+          backgroundColor: activeTab === Tab.Home ? "#dcfce7" : "transparent",
           color: "#000000",
           transform: activeTab === Tab.Home ? "scale(1.05)" : "scale(1)",
           opacity: activeTab === Tab.Home ? 1 : 0.6,
         }}
       >
-        <span className="text-xl">🎰</span>
-        <span className="text-xs mt-1 font-medium">Vending</span>
+        <span className="text-lg md:text-xl">🎰</span>
+        <span className="text-[10px] md:text-xs mt-0.5 font-medium">
+          Vending
+        </span>
       </button>
       <button
         onClick={() => setActiveTab(Tab.Raffle)}
         className="flex flex-col items-center justify-center w-full h-full rounded-lg transition-all duration-200"
         style={{
-          backgroundColor: activeTab === Tab.Raffle ? "#e8f5d0" : "transparent",
+          backgroundColor: activeTab === Tab.Raffle ? "#dcfce7" : "transparent",
           color: "#000000",
           transform: activeTab === Tab.Raffle ? "scale(1.05)" : "scale(1)",
           opacity: activeTab === Tab.Raffle ? 1 : 0.6,
         }}
       >
-        <span className="text-xl">🎟️</span>
-        <span className="text-xs mt-1 font-medium">Raffle</span>
+        <span className="text-lg md:text-xl">🎟️</span>
+        <span className="text-[10px] md:text-xs mt-0.5 font-medium">
+          Raffle
+        </span>
       </button>
       <button
         onClick={() => setActiveTab(Tab.Auction)}
         className="flex flex-col items-center justify-center w-full h-full rounded-lg transition-all duration-200"
         style={{
           backgroundColor:
-            activeTab === Tab.Auction ? "#e8f5d0" : "transparent",
+            activeTab === Tab.Auction ? "#dcfce7" : "transparent",
           color: "#000000",
           transform: activeTab === Tab.Auction ? "scale(1.05)" : "scale(1)",
           opacity: activeTab === Tab.Auction ? 1 : 0.6,
         }}
       >
-        <span className="text-xl">🏆</span>
-        <span className="text-xs mt-1 font-medium">Auction</span>
+        <span className="text-lg md:text-xl">🏆</span>
+        <span className="text-[10px] md:text-xs mt-0.5 font-medium">
+          Auction
+        </span>
       </button>
       {showWallet && (
         <button
@@ -68,14 +74,16 @@ export const Footer: React.FC<FooterProps> = ({
           className="flex flex-col items-center justify-center w-full h-full rounded-lg transition-all duration-200"
           style={{
             backgroundColor:
-              activeTab === Tab.Wallet ? "#e8f5d0" : "transparent",
+              activeTab === Tab.Wallet ? "#dcfce7" : "transparent",
             color: "#000000",
             transform: activeTab === Tab.Wallet ? "scale(1.05)" : "scale(1)",
             opacity: activeTab === Tab.Wallet ? 1 : 0.6,
           }}
         >
-          <span className="text-xl">👛</span>
-          <span className="text-xs mt-1 font-medium">Wallet</span>
+          <span className="text-lg md:text-xl">👛</span>
+          <span className="text-[10px] md:text-xs mt-0.5 font-medium">
+            Wallet
+          </span>
         </button>
       )}
     </div>

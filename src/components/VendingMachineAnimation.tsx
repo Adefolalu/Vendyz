@@ -81,14 +81,14 @@ export function VendingMachineAnimation({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="relative">
-        {/* Vending Machine Frame */}
+        {/* Line 84 omitted */}
         <div
-          className={`relative bg-gradient-to-b from-red-600 to-red-800 rounded-3xl shadow-2xl p-8 border-8 border-red-900 ${
+          className={`relative bg-gradient-to-b from-red-600 to-red-800 rounded-3xl shadow-2xl p-6 border-8 border-red-900 ${
             shake ? "animate-shake" : ""
           }`}
           style={{
-            width: "400px",
-            minHeight: "600px",
+            width: "320px",
+            minHeight: "480px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
           }}
         >

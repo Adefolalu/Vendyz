@@ -55,11 +55,11 @@ export default function App({ title }: AppProps = { title: "Vendyz" }) {
     return (
       <div
         className="flex items-center justify-center h-screen"
-        style={{ backgroundColor: "#EEFFBE" }}
+        style={{ backgroundColor: "#fef2f2" }}
       >
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-bounce">🎰</div>
-          <p className="text-lg font-semibold" style={{ color: "#000000" }}>
+          <div className="text-6xl mb-4 animate-bounce">🎄</div>
+          <p className="text-lg font-semibold text-red-600">
             Loading Vendyz...
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function App({ title }: AppProps = { title: "Vendyz" }) {
         paddingBottom: context?.client.safeAreaInsets?.bottom ?? 0,
         paddingLeft: context?.client.safeAreaInsets?.left ?? 0,
         paddingRight: context?.client.safeAreaInsets?.right ?? 0,
-        backgroundColor: "#EEFFBE",
+        backgroundColor: "#fef2f2",
         color: "#000000",
       }}
       className="min-h-screen"

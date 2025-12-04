@@ -94,9 +94,9 @@ export function PurchaseHistory() {
 
   if (!isConnected) {
     return (
-      <div className="w-full max-w-4xl mx-auto p-6">
-        <div className="text-center py-12">
-          <p className="text-gray-500">
+      <div className="w-full max-w-2xl mx-auto p-4">
+        <div className="text-center py-8">
+          <p className="text-gray-500 text-sm">
             Connect your wallet to view purchase history
           </p>
         </div>
@@ -105,31 +105,31 @@ export function PurchaseHistory() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
+    <div className="w-full max-w-2xl mx-auto p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">📜 Purchase History</h2>
-        <Button onClick={handleRefresh} className="px-4 py-2">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">🎁 Purchase History</h2>
+        <Button onClick={handleRefresh} className="px-3 py-1.5 text-xs">
           🔄 Refresh
         </Button>
       </div>
 
       {/* Purchases List */}
       {purchases.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <p className="text-gray-500 mb-4">No purchases yet</p>
-          <p className="text-sm text-gray-400">
+        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <p className="text-gray-500 mb-2 text-sm">No purchases yet</p>
+          <p className="text-xs text-gray-400">
             Make your first purchase to see it here!
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {purchases.map((purchase) => (
             <div
               key={purchase.requestId.toString()}
-              className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all"
+              className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-all"
             >
-              <div className="flex justify-between items-start mb-4">
+              <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="text-lg font-bold mb-1">
                     {TIER_NAMES[purchase.tier]} Wallet
@@ -206,7 +206,7 @@ export function PurchaseHistory() {
         </h3>
         <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-1">
           <li>
-            • <strong>Pending</strong>: Waiting for Chainlink VRF randomness
+            • <strong>Pending</strong>:
           </li>
           <li>
             • <strong>Ready</strong>: Your wallet is funded and ready to

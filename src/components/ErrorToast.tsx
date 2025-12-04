@@ -35,38 +35,38 @@ export function ErrorToast({
 
   return (
     <div
-      className={`fixed top-4 right-4 max-w-md z-50 transition-all duration-300 ${
+      className={`fixed top-4 right-4 max-w-sm z-50 transition-all duration-300 ${
         isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
       }`}
     >
       <div
-        className="p-4 rounded-lg shadow-lg border-2"
+        className="p-3 rounded-lg shadow-lg border-2"
         style={{
-          backgroundColor: "#f5d0d0",
-          borderColor: "#d47a7a",
+          backgroundColor: "#fef2f2",
+          borderColor: "#ef4444",
           color: "#000000",
         }}
       >
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between mb-1">
           <div className="flex items-center gap-2">
-            <span className="text-xl">⚠️</span>
-            <h3 className="font-bold text-lg">{title}</h3>
+            <span className="text-lg">⚠️</span>
+            <h3 className="font-bold text-base">{title}</h3>
           </div>
           <button
             onClick={handleClose}
-            className="text-xl font-bold hover:opacity-70 transition-opacity"
+            className="text-lg font-bold hover:opacity-70 transition-opacity"
             style={{ color: "#000000" }}
           >
             ×
           </button>
         </div>
-        <p className="text-sm mb-2" style={{ opacity: 0.9 }}>
+        <p className="text-xs mb-1" style={{ opacity: 0.9 }}>
           {message}
         </p>
         {action && (
           <p
-            className="text-xs font-semibold mt-2 p-2 rounded"
-            style={{ backgroundColor: "#f8e8d0", color: "#000000" }}
+            className="text-[10px] font-semibold mt-1 p-1.5 rounded"
+            style={{ backgroundColor: "#fee2e2", color: "#000000" }}
           >
             💡 {action}
           </p>

@@ -9,31 +9,31 @@
 export function TierCardSkeleton() {
   return (
     <div
-      className="p-6 rounded-lg border-2 animate-pulse"
-      style={{ backgroundColor: "#f5ffdb", borderColor: "#c8d99a" }}
+      className="p-4 rounded-lg border-2 animate-pulse"
+      style={{ backgroundColor: "#fef2f2", borderColor: "#ef4444" }}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-2">
         <div
-          className="h-6 w-24 rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-5 w-20 rounded"
+          style={{ backgroundColor: "#fecaca" }}
         />
         <div
-          className="h-6 w-16 rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-5 w-12 rounded"
+          style={{ backgroundColor: "#fecaca" }}
         />
       </div>
       <div className="space-y-2">
         <div
-          className="h-4 w-full rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-3 w-full rounded"
+          style={{ backgroundColor: "#fecaca" }}
         />
         <div
-          className="h-4 w-3/4 rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-3 w-3/4 rounded"
+          style={{ backgroundColor: "#fecaca" }}
         />
         <div
-          className="h-4 w-5/6 rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-3 w-5/6 rounded"
+          style={{ backgroundColor: "#fecaca" }}
         />
       </div>
     </div>
@@ -43,30 +43,30 @@ export function TierCardSkeleton() {
 export function RaffleCardSkeleton() {
   return (
     <div
-      className="p-6 rounded-lg border-2 animate-pulse"
-      style={{ backgroundColor: "#EEFFBE", borderColor: "#c8d99a" }}
+      className="p-4 rounded-lg border-2 animate-pulse"
+      style={{ backgroundColor: "#f0fdf4", borderColor: "#16a34a" }}
     >
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3">
         <div
-          className="h-8 w-48 rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-6 w-40 rounded"
+          style={{ backgroundColor: "#bbf7d0" }}
         />
         <div
-          className="h-6 w-12 rounded-full"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-5 w-10 rounded-full"
+          style={{ backgroundColor: "#bbf7d0" }}
         />
       </div>
       <div
-        className="mb-4 p-4 rounded-lg"
-        style={{ backgroundColor: "#f5ffdb" }}
+        className="mb-3 p-3 rounded-lg"
+        style={{ backgroundColor: "#dcfce7" }}
       >
         <div
-          className="h-4 w-24 rounded mb-2"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-3 w-20 rounded mb-2"
+          style={{ backgroundColor: "#bbf7d0" }}
         />
         <div
-          className="h-10 w-40 rounded"
-          style={{ backgroundColor: "#e0f0a0" }}
+          className="h-8 w-32 rounded"
+          style={{ backgroundColor: "#bbf7d0" }}
         />
       </div>
       <div className="mb-4">
@@ -314,7 +314,7 @@ export function FullPageLoader({
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ backgroundColor: "rgba(238, 255, 190, 0.9)" }}
+      style={{ backgroundColor: "rgba(254, 242, 242, 0.9)" }}
     >
       <div className="text-center">
         <Spinner size="lg" />

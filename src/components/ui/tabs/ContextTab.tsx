@@ -23,10 +23,10 @@ export function ContextTab() {
   const { context } = useMiniApp();
   
   return (
-    <div className="mx-6">
-      <h2 className="text-lg font-semibold mb-2">Context</h2>
-      <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
-        <pre className="font-mono text-xs whitespace-pre-wrap break-words w-full">
+    <div className="mx-4">
+      <h2 className="text-base font-semibold mb-1.5">Context</h2>
+      <div className="p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <pre className="font-mono text-[10px] whitespace-pre-wrap break-words w-full">
           {JSON.stringify(context, null, 2)}
         </pre>
       </div>

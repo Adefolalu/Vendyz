@@ -22,7 +22,7 @@ import {
 import { WalletPreparationModal } from "~/components/WalletPreparationModal";
 import { VendingMachineAnimation } from "~/components/VendingMachineAnimation";
 import { useTreasuryBalance } from "~/hooks/useTreasuryBalance";
-import { Wallet, XCircle, Zap, Star } from "lucide-react";
+import { Wallet, XCircle, Zap, Star, Snowflake } from "lucide-react";
 
 // USDC on Base mainnet
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -75,10 +75,10 @@ interface TierDisplay {
 }
 
 const TIER_NAMES = [
-  { name: "Bronze", emoji: "🥉", code: "T1" },
-  { name: "Silver", emoji: "🥈", code: "T2" },
-  { name: "Gold", emoji: "🥇", code: "T3" },
-  { name: "Diamond", emoji: "💎", code: "T4" },
+  { name: "Cookie", emoji: "🍪", code: "T1" },
+  { name: "Reindeer", emoji: "🦌", code: "T2" },
+  { name: "Sleigh", emoji: "🛷", code: "T3" },
+  { name: "Santa", emoji: "🎅", code: "T4" },
 ];
 
 export function VendingMachine() {
@@ -92,7 +92,7 @@ export function VendingMachine() {
   const [walletData, setWalletData] = useState<any>(null);
   const [preparingDots, setPreparingDots] = useState("");
   const [codeInput, setCodeInput] = useState<string>("");
-  const [message, setMessage] = useState<string>("🎰 WELCOME TO VENDYZ 🎰");
+  const [message, setMessage] = useState<string>("🎅 HO HO HO! WELCOME! 🎅");
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
@@ -450,7 +450,8 @@ export function VendingMachine() {
     }
 
     // Check if tier is fundable
-    const isTierFundable = treasuryData?.tiers?.[tier.id as 1 | 2 | 3 | 4]?.fundable ?? true;
+    const isTierFundable =
+      treasuryData?.tiers?.[tier.id as 1 | 2 | 3 | 4]?.fundable ?? true;
     if (!isTierFundable) {
       setMessage("❌ TIER SOLD OUT ❌");
       setTimeout(() => {
@@ -477,16 +478,16 @@ export function VendingMachine() {
     <div className="space-y-2">
       <button
         onClick={() => connect({ connector: connectors[1] })}
-        className="w-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 hover:from-yellow-400 hover:via-yellow-300 hover:to-yellow-400 text-black py-3 md:py-4 rounded-lg transition-all shadow-2xl hover:shadow-yellow-500/50 flex items-center justify-center gap-2 border-2 border-yellow-600 text-base md:text-lg font-bold"
+        className="w-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 hover:from-yellow-400 hover:via-yellow-300 hover:to-yellow-400 text-black py-2 md:py-3 rounded-lg transition-all shadow-2xl hover:shadow-yellow-500/50 flex items-center justify-center gap-2 border-2 border-yellow-600 text-sm md:text-base font-bold"
       >
-        <Wallet size={18} className="md:w-5 md:h-5" />
+        <Wallet size={16} className="md:w-4 md:h-4" />
         🔌 CONNECT COINBASE WALLET 🔌
       </button>
       <button
         onClick={() => connect({ connector: connectors[2] })}
-        className="w-full bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500 hover:from-orange-400 hover:via-orange-300 hover:to-orange-400 text-white py-3 md:py-4 rounded-lg transition-all shadow-2xl hover:shadow-orange-500/50 flex items-center justify-center gap-2 border-2 border-orange-600 text-base md:text-lg font-bold"
+        className="w-full bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500 hover:from-orange-400 hover:via-orange-300 hover:to-orange-400 text-white py-2 md:py-3 rounded-lg transition-all shadow-2xl hover:shadow-orange-500/50 flex items-center justify-center gap-2 border-2 border-orange-600 text-sm md:text-base font-bold"
       >
-        <Wallet size={18} className="md:w-5 md:h-5" />
+        <Wallet size={16} className="md:w-4 md:h-4" />
         🦊 CONNECT METAMASK 🦊
       </button>
     </div>
@@ -494,50 +495,60 @@ export function VendingMachine() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Vending Machine Frame */}
-      <div className="bg-gradient-to-b from-red-600 via-red-700 to-red-950 rounded-2xl md:rounded-3xl p-4 md:p-8 shadow-2xl border-4 md:border-8 border-yellow-500 relative overflow-hidden">
-        {/* Animated background lights */}
+      {/* Vending Machine Frame - Santa Theme */}
+      <div className="bg-gradient-to-b from-red-700 via-red-600 to-red-800 rounded-2xl md:rounded-3xl p-3 md:p-5 shadow-2xl border-2 md:border-4 border-white relative overflow-hidden">
+        {/* Snow texture overlay */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
+          }}
+        ></div>
+
+        {/* Animated background lights - Christmas colors */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 animate-pulse"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-red-500 to-green-400 animate-pulse"></div>
+          <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 via-red-500 to-green-400 animate-pulse"></div>
         </div>
 
-        {/* Corner decorations */}
-        <div className="absolute top-2 md:top-4 left-2 md:left-4 text-yellow-400 animate-pulse">
-          <Star className="w-4 h-4 md:w-8 md:h-8 fill-yellow-400" />
+        {/* Corner decorations - Snowflakes */}
+        <div className="absolute top-2 md:top-4 left-2 md:left-4 text-white animate-pulse">
+          <Snowflake className="w-3 h-3 md:w-6 md:h-6" />
         </div>
-        <div className="absolute top-2 md:top-4 right-2 md:right-4 text-yellow-400 animate-pulse">
-          <Star className="w-4 h-4 md:w-8 md:h-8 fill-yellow-400" />
+        <div className="absolute top-2 md:top-4 right-2 md:right-4 text-white animate-pulse">
+          <Snowflake className="w-3 h-3 md:w-6 md:h-6" />
         </div>
 
         {/* Top Sign */}
-        <div className="bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 text-red-900 text-center py-3 md:py-4 rounded-lg md:rounded-xl mb-4 md:mb-6 shadow-2xl border-2 md:border-4 border-yellow-500 relative animate-pulse">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
-          <h1 className="tracking-widest text-xl md:text-3xl relative z-10">
-            🎰 VENDYZ 🎰
+        <div className="bg-gradient-to-r from-green-700 via-green-600 to-green-700 text-white text-center py-2 md:py-3 rounded-lg md:rounded-xl mb-2 md:mb-3 shadow-2xl border-2 md:border-4 border-red-500 relative animate-pulse">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/snow.png')] opacity-30"></div>
+          <h1 className="tracking-widest text-lg md:text-2xl relative z-10 font-bold drop-shadow-md">
+            🎄 VENDYZ 🎄
           </h1>
-          <p className="text-xs md:text-sm tracking-wider relative z-10">
-            ANONYMOUS WALLET CASINO
+          <p className="text-[10px] md:text-xs tracking-wider relative z-10 text-green-100">
+            FESTIVE WALLET WORKSHOP
           </p>
           {isConnected && purchaseCount !== undefined && (
-            <p className="text-xs mt-1 relative z-10">
+            <p className="text-[10px] mt-0.5 relative z-10">
               Purchases: {purchaseCount?.toString() || "0"}
             </p>
           )}
         </div>
 
         {/* Display Screen */}
-        <div className="bg-black text-yellow-300 p-3 md:p-4 rounded-lg mb-4 md:mb-6 font-mono text-center shadow-inner border-2 md:border-4 border-red-800 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-transparent to-red-600/20 animate-pulse"></div>
-          <div className="text-sm md:text-2xl tracking-wide relative z-10 animate-pulse">
+        <div className="bg-slate-900 text-cyan-300 p-2 md:p-2.5 rounded-lg mb-2 md:mb-3 font-mono text-center shadow-inner border-2 md:border-4 border-slate-600 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-cyan-500/10 animate-pulse"></div>
+          <div className="text-xs md:text-lg tracking-wide relative z-10 animate-pulse drop-shadow-[0_0_5px_rgba(103,232,249,0.8)]">
             {message}
           </div>
         </div>
 
         {/* Wallet Tiers Display Area */}
-        <div className="bg-gradient-to-b from-black via-red-950 to-black rounded-lg md:rounded-xl p-2 md:p-3 mb-3 md:mb-4 shadow-2xl border-2 border-yellow-500 relative">
+        <div className="bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 rounded-lg md:rounded-xl p-1.5 md:p-2 mb-2 md:mb-3 shadow-2xl border-2 border-white/50 relative">
           <div className="absolute inset-0 opacity-20">
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 via-transparent to-yellow-400/30 animate-pulse"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400/30 via-transparent to-green-400/30 animate-pulse"></div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-2 relative z-10">
@@ -547,37 +558,47 @@ export function VendingMachine() {
               const maxValueUSDC = Number(formatUnits(tier.maxValue, 6));
 
               // Check if tier is fundable from treasury
-              const isTierFundable = treasuryData?.tiers?.[tier.id as 1 | 2 | 3 | 4]?.fundable ?? true;
+              const isTierFundable =
+                treasuryData?.tiers?.[tier.id as 1 | 2 | 3 | 4]?.fundable ??
+                true;
               const isDisabled = !isTierFundable;
 
               return (
                 <div
                   key={tier.id}
-                  className={`bg-gradient-to-b from-red-800 via-red-900 to-black rounded-md md:rounded-lg p-1.5 md:p-2 shadow-xl border-2 flex flex-col items-center justify-center relative overflow-hidden group transition-all ${
+                  className={`bg-gradient-to-b from-green-800 via-green-900 to-slate-900 rounded-md md:rounded-lg p-1 md:p-1.5 shadow-xl border-2 flex flex-col items-center justify-center relative overflow-hidden group transition-all ${
                     isDisabled
-                      ? "border-gray-600 opacity-50 cursor-not-allowed"
-                      : "border-yellow-500 hover:shadow-yellow-500/50 hover:scale-105 hover:border-yellow-300"
+                      ? "border-slate-700 opacity-50 cursor-not-allowed grayscale"
+                      : "border-red-500 hover:shadow-red-500/50 hover:scale-105 hover:border-green-400"
                   }`}
-                  title={isDisabled ? "Insufficient treasury balance for this tier" : ""}
+                  title={
+                    isDisabled
+                      ? "Insufficient treasury balance for this tier"
+                      : ""
+                  }
                 >
                   {isDisabled && (
                     <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">
-                      <div className="text-red-500 text-xs md:text-sm font-bold">SOLD OUT</div>
+                      <div className="text-red-500 text-[8px] md:text-[10px] font-bold">
+                        SOLD OUT
+                      </div>
                     </div>
                   )}
-                  
-                  <div className={`absolute inset-0 bg-gradient-to-t from-yellow-500/20 to-transparent opacity-0 transition-opacity ${!isDisabled && "group-hover:opacity-100"}`}></div>
 
-                  <div className="text-[9px] text-yellow-400 mb-0.5 relative z-10 font-bold">
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t from-green-500/20 to-transparent opacity-0 transition-opacity ${!isDisabled && "group-hover:opacity-100"}`}
+                  ></div>
+
+                  <div className="text-[8px] text-green-300 mb-0.5 relative z-10 font-bold">
                     {TIER_NAMES[tier.id - 1].code}
                   </div>
-                  <div className="text-xl md:text-3xl mb-0.5 relative z-10">
+                  <div className="text-lg md:text-2xl mb-0.5 relative z-10">
                     {tier.emoji}
                   </div>
-                  <div className="text-[10px] md:text-xs text-yellow-400 font-bold relative z-10">
+                  <div className="text-[9px] md:text-[11px] text-white font-bold relative z-10">
                     🪙 {priceUSDC}
                   </div>
-                  <div className="text-[8px] md:text-[10px] text-green-400 relative z-10 mt-0.5">
+                  <div className="text-[7px] md:text-[9px] text-yellow-300 relative z-10 mt-0.5">
                     WIN ${minValueUSDC}-${maxValueUSDC}
                   </div>
                 </div>
@@ -587,41 +608,43 @@ export function VendingMachine() {
         </div>
 
         {/* Control Panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-4 relative z-10">
           {/* Left Side - Keypad & Controls */}
-          <div className="space-y-3 md:space-y-4">
+          <div className="space-y-2 md:space-y-3">
             {/* Keypad */}
-            <div className="bg-black rounded-lg p-2 md:p-3 border-2 border-yellow-500 shadow-xl relative overflow-hidden">
+            <div className="bg-slate-900 rounded-lg p-1.5 md:p-2 border-2 border-white/30 shadow-xl relative overflow-hidden">
               {/* Coin insertion animation */}
               {showCoinAnimation && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-                  <div className="text-6xl md:text-8xl animate-[coinDrop_0.8s_ease-in]">
-                    🪙
+                  <div className="text-4xl md:text-6xl animate-[coinDrop_0.8s_ease-in]">
+                    ❄️
                   </div>
                 </div>
               )}
 
-              <div className="text-yellow-400 text-[10px] md:text-xs mb-1 md:mb-2 text-center tracking-wider">
+              <div className="text-cyan-300 text-[9px] md:text-[11px] mb-1 md:mb-2 text-center tracking-wider font-mono">
                 {codeInput
-                  ? `🪙 ${codeInput} USDC SELECTED 🪙`
-                  : "🪙 INSERT COIN 🪙"}
+                  ? `❄️ ${codeInput} USDC SELECTED ❄️`
+                  : "❄️ INSERT COIN ❄️"}
               </div>
 
               {!codeInput ? (
                 <div className="grid grid-cols-2 gap-1.5 md:gap-2">
                   {["5", "20", "50", "100"].map((key, index) => {
                     const tierId = index + 1;
-                    const isTierFundable = treasuryData?.tiers?.[tierId as 1 | 2 | 3 | 4]?.fundable ?? true;
-                    
+                    const isTierFundable =
+                      treasuryData?.tiers?.[tierId as 1 | 2 | 3 | 4]
+                        ?.fundable ?? true;
+
                     return (
                       <button
                         key={key}
                         onClick={() => handleCodeInput(key)}
                         disabled={!isTierFundable}
-                        className={`py-2 md:py-3 rounded-lg transition-all shadow-lg border-2 text-base md:text-xl font-bold ${
+                        className={`py-1.5 md:py-2 rounded-lg transition-all shadow-lg border-2 text-sm md:text-lg font-bold ${
                           isTierFundable
-                            ? "bg-gradient-to-b from-yellow-500 to-yellow-700 hover:from-yellow-400 hover:to-yellow-600 text-black hover:shadow-yellow-500/50 border-yellow-300 cursor-pointer"
-                            : "bg-gradient-to-b from-gray-500 to-gray-700 text-gray-400 border-gray-600 cursor-not-allowed opacity-50"
+                            ? "bg-gradient-to-b from-red-500 to-red-700 hover:from-red-400 hover:to-red-600 text-white hover:shadow-red-500/50 border-red-300 cursor-pointer"
+                            : "bg-gradient-to-b from-slate-700 to-slate-800 text-slate-500 border-slate-600 cursor-not-allowed opacity-50"
                         }`}
                       >
                         🪙 {key}
@@ -630,9 +653,9 @@ export function VendingMachine() {
                   })}
                 </div>
               ) : (
-                <div className="flex items-center justify-center py-4 md:py-6">
-                  <div className="bg-gradient-to-b from-green-500 to-green-700 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg border-4 border-green-300 shadow-2xl shadow-green-500/50">
-                    <div className="text-3xl md:text-5xl font-bold flex items-center gap-2">
+                <div className="flex items-center justify-center py-2 md:py-3">
+                  <div className="bg-gradient-to-b from-green-500 to-green-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg border-4 border-green-300 shadow-2xl shadow-green-500/50">
+                    <div className="text-2xl md:text-4xl font-bold flex items-center gap-2">
                       🪙 {codeInput}
                     </div>
                   </div>
@@ -641,7 +664,7 @@ export function VendingMachine() {
             </div>
 
             {/* Action Buttons */}
-            <div className="bg-black rounded-lg p-2 md:p-3 border-2 border-yellow-500 shadow-xl">
+            <div className="bg-slate-900 rounded-lg p-1.5 md:p-2 border-2 border-white/30 shadow-xl">
               <div className="space-y-1.5 md:space-y-2">
                 {!isConnected ? (
                   <ConnectWalletButton />
@@ -649,24 +672,26 @@ export function VendingMachine() {
                   <button
                     onClick={handleSpinNow}
                     disabled={isPurchasePending || isPurchaseConfirming}
-                    className="w-full bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 hover:from-yellow-400 hover:via-yellow-300 hover:to-yellow-400 text-red-900 py-2 md:py-3 rounded-lg transition-all shadow-2xl hover:shadow-yellow-500/50 flex items-center justify-center gap-2 border-2 border-yellow-600 text-sm md:text-base animate-pulse"
+                    className="w-full bg-gradient-to-r from-green-500 via-green-400 to-green-500 hover:from-green-400 hover:via-green-300 hover:to-green-400 text-white py-1.5 md:py-2 rounded-lg transition-all shadow-2xl hover:shadow-green-500/50 flex items-center justify-center gap-2 border-2 border-green-300 text-xs md:text-sm animate-pulse font-bold"
                   >
                     {isPurchasePending || isPurchaseConfirming ? (
                       <span className="flex items-center gap-2">
                         <span className="animate-spin">⏳</span>
-                        {isPurchasePending ? "PURCHASING..." : "CONFIRMING..."}
+                        {isPurchasePending
+                          ? "WRAPPING GIFT..."
+                          : "CHECKING LIST..."}
                       </span>
                     ) : (
                       <>
-                        <Wallet size={18} className="md:w-5 md:h-5" />
-                        SPIN NOW!
+                        <Wallet size={16} className="md:w-4 md:h-4" />
+                        OPEN GIFT!
                       </>
                     )}
                   </button>
                 )}
                 <button
                   onClick={handleClear}
-                  className="w-full bg-gradient-to-b from-orange-600 to-orange-800 hover:from-orange-500 hover:to-orange-700 text-white py-1.5 md:py-2 rounded-lg transition-all shadow-lg hover:shadow-orange-500/50 flex items-center justify-center gap-2 border-2 border-orange-400 text-xs md:text-sm"
+                  className="w-full bg-gradient-to-b from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white py-1 md:py-1.5 rounded-lg transition-all shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 border-2 border-red-400 text-[10px] md:text-xs"
                 >
                   <XCircle size={14} className="md:w-4 md:h-4" />
                   CLEAR
@@ -677,16 +702,18 @@ export function VendingMachine() {
 
           {/* Right Side - Status Display */}
           <div>
-            <div className="bg-black rounded-lg p-3 md:p-4 border-2 md:border-4 border-yellow-500 min-h-[400px] md:min-h-[500px] shadow-2xl relative overflow-hidden">
+            <div className="bg-slate-900 rounded-lg p-1.5 md:p-2 border-2 border-white/30 min-h-[200px] md:min-h-[250px] shadow-xl relative overflow-hidden h-full">
               {/* Purchasing/Confirming */}
               {(isPurchasePending || isPurchaseConfirming) && (
-                <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/80">
+                <div className="absolute inset-0 flex items-center justify-center z-20 bg-slate-900/90">
                   <div className="text-center">
-                    <div className="text-4xl md:text-6xl mb-4 animate-spin">
-                      🎰
+                    <div className="text-3xl md:text-5xl mb-2 animate-spin">
+                      ❄️
                     </div>
-                    <div className="text-yellow-400 text-lg md:text-2xl animate-pulse">
-                      {isPurchasePending ? "PURCHASING..." : "CONFIRMING..."}
+                    <div className="text-cyan-300 text-sm md:text-lg animate-pulse">
+                      {isPurchasePending
+                        ? "WRAPPING GIFT..."
+                        : "CHECKING LIST..."}
                     </div>
                   </div>
                 </div>
@@ -694,30 +721,30 @@ export function VendingMachine() {
 
               {/* Preparing Wallet */}
               {walletStatus === "preparing" && (
-                <div className="h-full flex flex-col items-center justify-center p-4 space-y-4">
+                <div className="h-full flex flex-col items-center justify-center p-2 space-y-2">
                   <div className="relative">
-                    <div className="text-6xl md:text-8xl animate-bounce">
-                      🎉
+                    <div className="text-4xl md:text-6xl animate-bounce">
+                      🎁
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-20 h-20 md:w-24 md:h-24 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-12 h-12 md:w-16 md:h-16 border-2 md:border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                   </div>
 
                   <div className="text-center">
-                    <h3 className="text-yellow-400 text-xl md:text-2xl font-bold mb-1">
-                      CONGRATULATIONS!
+                    <h3 className="text-green-400 text-sm md:text-lg font-bold mb-0.5">
+                      HO HO HO!
                     </h3>
-                    <p className="text-yellow-300 text-sm md:text-base">
-                      Preparing your rewards{preparingDots}
+                    <p className="text-green-200 text-[10px] md:text-xs">
+                      Preparing your gift{preparingDots}
                     </p>
                   </div>
 
-                  <div className="w-full max-w-sm space-y-2">
-                    <div className="flex items-center gap-2 text-xs md:text-sm">
-                      <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <div className="w-full max-w-[200px] space-y-1">
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[11px]">
+                      <div className="w-3 h-3 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
                         <svg
-                          className="w-3 h-3 text-white"
+                          className="w-2 h-2 text-white"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -730,19 +757,19 @@ export function VendingMachine() {
                       </div>
                       <span className="text-green-400">Purchase confirmed</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs md:text-sm">
-                      <div className="w-4 h-4 rounded-full bg-yellow-500 animate-pulse flex-shrink-0"></div>
-                      <span className="text-yellow-400 font-semibold">
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[11px]">
+                      <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse flex-shrink-0"></div>
+                      <span className="text-red-400 font-semibold">
                         Generating wallet...
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs md:text-sm">
-                      <div className="w-4 h-4 rounded-full bg-gray-600 flex-shrink-0"></div>
-                      <span className="text-gray-500">Funding tokens</span>
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[11px]">
+                      <div className="w-3 h-3 rounded-full bg-slate-600 flex-shrink-0"></div>
+                      <span className="text-slate-400">Funding tokens</span>
                     </div>
                   </div>
 
-                  <p className="text-yellow-500 text-xs">
+                  <p className="text-cyan-300 text-[8px] md:text-[10px]">
                     ⏱️ Usually takes 30-60 seconds
                   </p>
                 </div>
@@ -763,20 +790,20 @@ export function VendingMachine() {
 
               {/* Error State */}
               {walletStatus === "error" && (
-                <div className="h-full flex flex-col items-center justify-center p-4 space-y-4">
-                  <div className="text-6xl">⚠️</div>
+                <div className="h-full flex flex-col items-center justify-center p-2 space-y-2">
+                  <div className="text-4xl md:text-5xl">⚠️</div>
 
                   <div className="text-center">
-                    <h3 className="text-red-400 text-xl md:text-2xl font-bold mb-2">
+                    <h3 className="text-red-400 text-sm md:text-lg font-bold mb-1">
                       TAKING LONGER
                     </h3>
-                    <p className="text-red-300 text-sm">
+                    <p className="text-red-300 text-[10px] md:text-xs">
                       Your wallet is still being prepared
                     </p>
                   </div>
 
-                  <div className="bg-yellow-900/50 border-2 border-yellow-600 rounded-lg p-4 w-full max-w-sm">
-                    <p className="text-yellow-300 text-xs text-center mb-2">
+                  <div className="bg-yellow-900/50 border border-yellow-600 rounded p-2 w-full max-w-[200px]">
+                    <p className="text-yellow-300 text-[9px] md:text-[10px] text-center mb-1">
                       Check the <span className="font-bold">WALLET TAB</span> in
                       a moment to retrieve your wallet
                     </p>
@@ -787,7 +814,7 @@ export function VendingMachine() {
                       setWalletStatus("idle");
                       setLatestRequestId(null);
                     }}
-                    className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg text-sm font-bold"
+                    className="px-4 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded text-[10px] md:text-xs font-bold"
                   >
                     CLOSE
                   </button>
@@ -800,10 +827,10 @@ export function VendingMachine() {
                 !isPurchaseConfirming && (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-gray-600 text-center">
-                      <div className="text-4xl md:text-6xl mb-4 opacity-30">
+                      <div className="text-3xl md:text-5xl mb-2 opacity-30">
                         🎰
                       </div>
-                      <div className="text-xs">
+                      <div className="text-[10px] md:text-xs">
                         STATUS
                         <br />
                         DISPLAY

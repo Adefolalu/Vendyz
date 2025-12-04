@@ -93,32 +93,44 @@ export function WalletPreparationModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="bg-slate-900 border-2 border-white/30 rounded-xl shadow-2xl max-w-sm w-full p-4 md:p-6 relative overflow-hidden">
+        {/* Snow texture overlay */}
+        <div
+          className="absolute inset-0 opacity-10 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "20px 20px",
+          }}
+        ></div>
+
         {status === "preparing" && (
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-4 relative z-10">
             {/* Animated Icon */}
             <div className="relative">
-              <div className="text-8xl animate-bounce">🎉</div>
+              <div className="text-6xl md:text-7xl animate-bounce">🎁</div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-16 h-16 md:w-20 md:h-20 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
 
             {/* Title */}
             <div>
-              <h2 className="text-3xl font-bold mb-2">Congratulations!</h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Preparing your rewards{dots}
+              <h2 className="text-xl md:text-2xl font-bold mb-1 text-green-400">
+                HO HO HO!
+              </h2>
+              <p className="text-sm md:text-base text-green-200">
+                Wrapping your gift{dots}
               </p>
             </div>
 
             {/* Status Steps */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-left space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+            <div className="bg-slate-800/50 rounded-lg p-3 text-left space-y-2 border border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="flex-shrink-0 w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
                   <svg
-                    className="w-4 h-4 text-white"
+                    className="w-3 h-3 text-white"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -129,70 +141,68 @@ export function WalletPreparationModal({
                     />
                   </svg>
                 </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="text-xs md:text-sm text-green-300">
                   Purchase confirmed
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 animate-pulse flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full"></div>
+              <div className="flex items-center gap-2">
+                <div className="flex-shrink-0 w-4 h-4 rounded-full bg-red-500 animate-pulse flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-semibold">
-                  Generating your wallet...
+                <span className="text-xs md:text-sm text-red-300 font-semibold">
+                  Generating wallet...
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <div className="flex-shrink-0 w-4 h-4 rounded-full bg-slate-600"></div>
+                <span className="text-xs md:text-sm text-slate-400">
                   Selecting tokens
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <div className="flex-shrink-0 w-4 h-4 rounded-full bg-slate-600"></div>
+                <span className="text-xs md:text-sm text-slate-400">
                   Funding wallet
                 </span>
               </div>
             </div>
 
             {/* Request ID */}
-            <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3">
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                Request ID:
-              </p>
-              <p className="font-mono text-sm font-semibold break-all">
+            <div className="bg-slate-800 rounded-lg p-2 border border-white/10">
+              <p className="text-[10px] text-slate-400 mb-0.5">Request ID:</p>
+              <p className="font-mono text-xs font-semibold break-all text-cyan-300">
                 {requestId}
               </p>
             </div>
 
             {/* Info */}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-[10px] text-slate-400">
               ⏱️ This usually takes 30-60 seconds
             </p>
           </div>
         )}
 
         {status === "error" && (
-          <div className="text-center space-y-6">
-            <div className="text-6xl">⚠️</div>
+          <div className="text-center space-y-4 relative z-10">
+            <div className="text-5xl">⚠️</div>
             <div>
-              <h2 className="text-2xl font-bold mb-2 text-red-900 dark:text-red-300">
+              <h2 className="text-xl font-bold mb-1 text-red-400">
                 Taking Longer Than Expected
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">{error}</p>
+              <p className="text-sm text-red-200">{error}</p>
             </div>
 
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-400">
+            <div className="bg-yellow-900/30 border border-yellow-600 rounded-lg p-3">
+              <p className="text-xs text-yellow-400">
                 <strong>Your Request ID:</strong>
               </p>
-              <p className="font-mono text-sm font-semibold mt-1 break-all">
+              <p className="font-mono text-xs font-semibold mt-1 break-all text-yellow-200">
                 {requestId}
               </p>
-              <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-2">
+              <p className="text-[10px] text-yellow-500 mt-2">
                 Use this ID in the Wallet tab to retrieve your wallet once
                 it&apos;s ready.
               </p>
@@ -200,7 +210,7 @@ export function WalletPreparationModal({
 
             <button
               onClick={onClose}
-              className="w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
+              className="w-full px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg transition-colors text-sm border border-slate-500"
             >
               Close
             </button>

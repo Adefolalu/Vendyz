@@ -250,18 +250,18 @@ export function SponsorAuction(): ReactElement | null {
 
   return (
     <div
-      className="w-full p-6 rounded-lg border-2"
+      className="w-full p-4 rounded-lg border-2"
       style={{
-        backgroundColor: "#EEFFBE",
-        borderColor: "#c8d99a",
+        backgroundColor: "#fef2f2",
+        borderColor: "#ef4444",
         color: "#000000",
       }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          🏆 Sponsor Auction
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          🎅 Sponsor Auction
         </h2>
-        <span className="text-sm font-semibold px-3 py-1 bg-orange-600 text-white rounded-full">
+        <span className="text-xs font-semibold px-2 py-0.5 bg-green-600 text-white rounded-full">
           #{String(auction.auctionId)}
         </span>
       </div>
