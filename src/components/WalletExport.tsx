@@ -70,10 +70,6 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
     setError(null);
 
     try {
-      // Sign message to prove ownership
-      const message = `Retrieve wallet for request ${requestId}`;
-      const signature = await signMessageAsync({ message });
-
       // Call backend API
       const response = await fetch(`${API_URL}/api/wallet/${requestId}`, {
         method: "POST",
@@ -82,7 +78,6 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
         },
         body: JSON.stringify({
           buyerAddress: address,
-          signature,
         }),
       });
 
@@ -92,7 +87,7 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
       }
 
       const data = await response.json();
-      setWallet(data);
+      setWallet(data.data);
     } catch (err) {
       console.error("Error retrieving wallet:", err);
       setError(
@@ -103,7 +98,7 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
     } finally {
       setLoading(false);
     }
-  }, [address, isConnected, requestId, signMessageAsync]);
+  }, [address, isConnected, requestId, API_URL]);
 
   // Auto-retrieve on mount
   useEffect(() => {

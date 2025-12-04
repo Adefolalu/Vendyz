@@ -709,44 +709,16 @@ export function VendingMachine() {
               )}
 
               {/* Wallet Ready */}
-              {walletStatus === "ready" && (
-                <div className="h-full flex flex-col items-center justify-center p-4 space-y-4">
-                  <div className="text-6xl md:text-8xl animate-pulse">✅</div>
-
-                  <div className="text-center">
-                    <h3 className="text-green-400 text-2xl md:text-3xl font-bold mb-2">
-                      WALLET READY!
-                    </h3>
-                    <p className="text-green-300 text-sm md:text-base">
-                      Your anonymous wallet is funded and ready
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-green-900 to-green-800 border-2 border-green-400 rounded-lg p-4 w-full max-w-sm">
-                    <div className="text-center space-y-3">
-                      <div className="flex items-center justify-center gap-2 text-yellow-400 text-xs mb-2">
-                        <Star className="w-3 h-3 fill-yellow-400" />
-                        <span>ALL SET!</span>
-                        <Star className="w-3 h-3 fill-yellow-400" />
-                      </div>
-                      <p className="text-green-300 text-sm">
-                        Go to the <span className="font-bold">WALLET TAB</span>{" "}
-                        to retrieve your wallet
-                      </p>
-                      <button
-                        onClick={() => {
-                          setWalletStatus("idle");
-                          setLatestRequestId(null);
-                          setCodeInput("");
-                          setSelectedTier(null);
-                        }}
-                        className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white py-2 rounded-lg transition-all text-sm font-bold border-2 border-green-400"
-                      >
-                        ✨ DONE ✨
-                      </button>
-                    </div>
-                  </div>
-                </div>
+              {walletStatus === "ready" && latestRequestId && (
+                <WalletPreparationModal
+                  requestId={latestRequestId}
+                  onClose={() => {
+                    setWalletStatus("idle");
+                    setLatestRequestId(null);
+                    setCodeInput("");
+                    setSelectedTier(null);
+                  }}
+                />
               )}
 
               {/* Error State */}
