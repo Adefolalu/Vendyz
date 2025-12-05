@@ -44,7 +44,7 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
   useEffect(() => {
     if (!wallet?.createdAt) return;
 
-    const interval = setInterval(() => {
+    const updateTimer = () => {
       const created = new Date(wallet.createdAt).getTime();
       const fiveMinutes = 5 * 60 * 1000;
       const elapsed = Date.now() - created;
@@ -52,6 +52,17 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
 
       setTimeRemaining(Math.floor(remaining / 1000));
 
+      return remaining;
+    };
+
+    // Update immediately
+    const remaining = updateTimer();
+
+    if (remaining === 0) return;
+
+    // Then update every second
+    const interval = setInterval(() => {
+      const remaining = updateTimer();
       if (remaining === 0) {
         clearInterval(interval);
       }
