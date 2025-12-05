@@ -98,16 +98,6 @@ export function WalletExport({ requestId, onClose }: WalletExportProps) {
       }
 
       const data = await response.json();
-      // Convert private key buffer to hex if needed
-      if (data.data.privateKey && typeof data.data.privateKey === "object") {
-        // Convert Buffer/Uint8Array to hex string
-        const bytes =
-          data.data.privateKey.data || Object.values(data.data.privateKey);
-        const hexString = Array.from(bytes as number[])
-          .map((b: number) => b.toString(16).padStart(2, "0"))
-          .join("");
-        data.data.privateKey = "0x" + hexString;
-      }
       setWallet(data.data);
     } catch (err) {
       console.error("Error retrieving wallet:", err);
