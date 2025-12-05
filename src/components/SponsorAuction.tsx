@@ -269,12 +269,12 @@ export function SponsorAuction(): ReactElement | null {
       {/* Time Remaining */}
       <div
         className="mb-4 p-4 rounded-lg"
-        style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
+        style={{ backgroundColor: "#06461D", color: "#ffffff" }}
       >
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+        <p className="text-sm mb-1" style={{ color: "#F3F5F6" }}>
           Time Remaining
         </p>
-        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+        <p className="text-2xl font-bold text-red-700">
           {daysLeft}d {hoursLeft}h
         </p>
       </div>
@@ -282,18 +282,20 @@ export function SponsorAuction(): ReactElement | null {
       <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
         <div
           className="p-3 rounded"
-          style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
+          style={{ backgroundColor: "#06461D", color: "#ffffff" }}
         >
-          <p className="text-gray-600 dark:text-gray-400 mb-1">
+          <p className="mb-1" style={{ color: "#F3F5F6" }}>
             Available Slots
           </p>
           <p className="font-bold">{Number(auction.availableSlots)} / 5</p>
         </div>
         <div
           className="p-3 rounded"
-          style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
+          style={{ backgroundColor: "#06461D", color: "#ffffff" }}
         >
-          <p className="text-gray-600 dark:text-gray-400 mb-1">Min Bid</p>
+          <p className="mb-1" style={{ color: "#F3F5F6" }}>
+            Min Bid
+          </p>
           <p className="font-bold">$100 USDC</p>
         </div>
       </div>
@@ -303,9 +305,9 @@ export function SponsorAuction(): ReactElement | null {
         activeSponsors.length > 0 && (
           <div
             className="mb-4 p-4 rounded-lg"
-            style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
+            style={{ backgroundColor: "#06461D", color: "#ffffff" }}
           >
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <p className="text-sm mb-2" style={{ color: "#F3F5F6" }}>
               Active Sponsors ({activeSponsors.length}/5)
             </p>
             <div className="space-y-1">
@@ -323,15 +325,15 @@ export function SponsorAuction(): ReactElement | null {
         <div
           className="mb-4 p-4 rounded-lg"
           style={{
-            backgroundColor: "#e8f5d0",
-            border: "2px solid #d4e7a0",
+            backgroundColor: "#bbf7d0",
+            border: "2px solid #16a34a",
             color: "#000000",
           }}
         >
-          <p className="text-sm text-blue-900 dark:text-blue-300 mb-1">
+          <p className="text-sm mb-1" style={{ color: "#F3F5F6" }}>
             Your Current Bid
           </p>
-          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+          <p className="text-xl font-bold text-green-700">
             ${Number(formatUnits(userBid as bigint, 6))} USDC
           </p>
         </div>
@@ -341,12 +343,12 @@ export function SponsorAuction(): ReactElement | null {
       {highestBid && Number(highestBid) > 0 && (
         <div
           className="mb-4 p-3 rounded-lg"
-          style={{ backgroundColor: "#f5ffdb", color: "#000000" }}
+          style={{ backgroundColor: "#fecaca", color: "#000000" }}
         >
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+          <p className="text-sm mb-1" style={{ color: "#F3F5F6" }}>
             Highest Bid
           </p>
-          <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
+          <p className="text-lg font-bold text-red-700">
             ${Number(formatUnits(highestBid as bigint, 6))} USDC
           </p>
         </div>
@@ -357,8 +359,8 @@ export function SponsorAuction(): ReactElement | null {
         <div
           className="mb-4 px-4 py-3 rounded"
           style={{
-            backgroundColor: "#d4e7a0",
-            border: "2px solid #b8d47a",
+            backgroundColor: "#bbf7d0",
+            border: "2px solid #16a34a",
             color: "#000000",
           }}
         >
@@ -370,8 +372,8 @@ export function SponsorAuction(): ReactElement | null {
         <div
           className="mb-4 px-4 py-3 rounded"
           style={{
-            backgroundColor: "#e8f5d0",
-            border: "2px solid #d4e7a0",
+            backgroundColor: "#bbf7d0",
+            border: "2px solid #16a34a",
             color: "#000000",
           }}
         >
@@ -394,7 +396,7 @@ export function SponsorAuction(): ReactElement | null {
               placeholder="0x..."
               className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-orange-500 dark:bg-gray-800 dark:text-white"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs mt-1" style={{ color: "#F3F5F6" }}>
               The ERC20 token you want to sponsor
             </p>
           </div>
@@ -412,7 +414,7 @@ export function SponsorAuction(): ReactElement | null {
               step="5"
               className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-orange-500 dark:bg-gray-800 dark:text-white"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs mt-1" style={{ color: "#F3F5F6" }}>
               Minimum $100, increments of $5
             </p>
           </div>
@@ -464,7 +466,7 @@ export function SponsorAuction(): ReactElement | null {
       ) : (
         <div className="space-y-3">
           {/* Description */}
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm" style={{ color: "#323D43" }}>
             Win a spot to have your token included in every wallet for 30 days.
             Top 5 bidders win!
           </p>
@@ -488,8 +490,8 @@ export function SponsorAuction(): ReactElement | null {
       <div
         className="mt-4 p-3 rounded text-xs"
         style={{
-          backgroundColor: "#f5ffdb",
-          border: "2px solid #e0f0a0",
+          backgroundColor: "#fecaca",
+          border: "2px solid #ef4444",
           color: "#000000",
           opacity: 0.9,
         }}
