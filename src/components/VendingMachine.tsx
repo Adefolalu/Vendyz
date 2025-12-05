@@ -20,9 +20,8 @@ import {
   updateTransactionStatus,
 } from "~/components/TransactionTracker";
 import { WalletPreparationModal } from "~/components/WalletPreparationModal";
-import { VendingMachineAnimation } from "~/components/VendingMachineAnimation";
 import { useTreasuryBalance } from "~/hooks/useTreasuryBalance";
-import { Wallet, XCircle, Zap, Star, Snowflake } from "lucide-react";
+import { Wallet, XCircle, Snowflake } from "lucide-react";
 
 // USDC on Base mainnet
 const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
@@ -57,13 +56,6 @@ const ERC20_ABI = [
   },
 ] as const;
 
-interface ContractTier {
-  price: bigint;
-  minValue: bigint;
-  maxValue: bigint;
-  active: boolean;
-}
-
 interface TierDisplay {
   id: number;
   name: string;
@@ -89,19 +81,20 @@ export function VendingMachine() {
   const [walletStatus, setWalletStatus] = useState<
     "idle" | "preparing" | "ready" | "error"
   >("idle");
-  const [walletData, setWalletData] = useState<any>(null);
+  const [_walletData, _setWalletData] = useState<any>(null);
   const [preparingDots, setPreparingDots] = useState("");
   const [codeInput, setCodeInput] = useState<string>("");
   const [message, setMessage] = useState<string>("🎅 HO HO HO! WELCOME! 🎅");
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const { address, isConnected } = useAccount();
-  const publicClient = usePublicClient();
+  const _publicClient = usePublicClient();
   const { connect, connectors } = useConnect();
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
   // Treasury balance hook
-  const { data: treasuryData, loading: treasuryLoading } = useTreasuryBalance();
+  const { data: treasuryData, loading: _treasuryLoading } =
+    useTreasuryBalance();
 
   // Animated dots effect for preparing state
   useEffect(() => {
@@ -135,7 +128,7 @@ export function VendingMachine() {
   const {
     data: approvalHash,
     writeContract: writeApproval,
-    isPending: isApprovalPending,
+    isPending: _isApprovalPending,
   } = useWriteContract();
 
   const { isLoading: isApprovalConfirming, isSuccess: isApprovalSuccess } =
@@ -172,7 +165,7 @@ export function VendingMachine() {
   // Poll wallet status after purchase
   useEffect(() => {
     if (!latestRequestId || walletStatus !== "preparing") return;
-
+    // eslint-disable-next-line prefer-const
     let pollInterval: NodeJS.Timeout | undefined;
     let attempts = 0;
     const maxAttempts = 60;
@@ -230,7 +223,7 @@ export function VendingMachine() {
             console.log("Request ID extracted:", requestId);
             break;
           }
-        } catch (e) {
+        } catch (_e) {
           // Skip logs that don't match
           continue;
         }
@@ -393,7 +386,7 @@ export function VendingMachine() {
   };
 
   // Fallback for wallets that don't support batch calls
-  const handleApprove = async () => {
+  const _handleApprove = async () => {
     if (!selectedTier) return;
     const tier = tiers.find((t) => t.id === selectedTier);
     if (!tier) return;
