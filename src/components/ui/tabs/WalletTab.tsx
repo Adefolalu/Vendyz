@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAccount, useDisconnect, useConnect, type Connector } from "wagmi";
+import { useEffect } from "react";
+import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { Button } from "../Button";
 import { USE_WALLET } from "../../../lib/constants";
 import { useMiniApp } from "@neynar/react";
-import { WalletExport } from "../../WalletExport";
 
 /**
  * WalletTab component manages wallet connection for EVM chains (Base).
@@ -26,10 +25,6 @@ export function WalletTab() {
   const { isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
-
-  // State for wallet retrieval
-  const [requestId, setRequestId] = useState<string>("");
-  const [showExport, setShowExport] = useState(false);
 
   // --- Effects ---
   /**
@@ -63,20 +58,6 @@ export function WalletTab() {
   }
 
   // --- Render ---
-
-  // Show WalletExport if requestId is provided
-  if (showExport && requestId) {
-    return (
-      <WalletExport
-        requestId={requestId}
-        onClose={() => {
-          setShowExport(false);
-          setRequestId("");
-        }}
-      />
-    );
-  }
-
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
       {/* Wallet Connection Section */}
@@ -110,54 +91,6 @@ export function WalletTab() {
             </div>
           )}
         </div>
-
-        {/* Wallet Retrieval Section */}
-        {isConnected && (
-          <div className="mt-6 max-w-sm mx-auto">
-            <div className="text-center mb-4">
-              <h2 className="text-xl font-bold mb-1">
-                🔓 Retrieve Your Wallet
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-xs">
-                Enter your purchase request ID to access your wallet
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium mb-1">
-                  Request ID
-                </label>
-                <input
-                  type="text"
-                  value={requestId}
-                  onChange={(e) => setRequestId(e.target.value)}
-                  placeholder="Enter request ID"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:border-blue-500 dark:bg-gray-800 dark:text-white text-sm"
-                />
-              </div>
-
-              <Button
-                onClick={() => setShowExport(true)}
-                disabled={!requestId}
-                className="w-full py-2"
-              >
-                Retrieve Wallet
-              </Button>
-
-              <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <h3 className="font-bold text-yellow-900 dark:text-yellow-300 mb-1 text-xs">
-                  ⚠️ Security Warning
-                </h3>
-                <ul className="text-[10px] text-yellow-800 dark:text-yellow-400 space-y-0.5">
-                  <li>• Only retrieve wallets on a secure, private device</li>
-                  <li>• Never share your private key with anyone</li>
-                  <li>• Credentials auto-delete after 5 minutes</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
