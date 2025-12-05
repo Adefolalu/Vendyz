@@ -137,26 +137,26 @@ export function VendingMachine() {
     });
 
   // Track approval transaction status (fallback)
-  useEffect(() => {
-    if (approvalHash) {
-      if (!isApprovalConfirming && !isApprovalSuccess) {
-        trackTransaction(approvalHash, "USDC Approval");
-      } else if (isApprovalConfirming) {
-        updateTransactionStatus(approvalHash, "confirming");
-      } else if (isApprovalSuccess) {
-        updateTransactionStatus(approvalHash, "success");
-      }
-    }
-  }, [approvalHash, isApprovalConfirming, isApprovalSuccess]);
+  // useEffect(() => {
+  //   if (approvalHash) {
+  //     if (!isApprovalConfirming && !isApprovalSuccess) {
+  //       trackTransaction(approvalHash, "USDC Approval");
+  //     } else if (isApprovalConfirming) {
+  //       updateTransactionStatus(approvalHash, "confirming");
+  //     } else if (isApprovalSuccess) {
+  //       updateTransactionStatus(approvalHash, "success");
+  //     }
+  //   }
+  // }, [approvalHash, isApprovalConfirming, isApprovalSuccess]);
 
   // Track batch transaction status and extract requestId
   useEffect(() => {
     if (callsId && isPurchaseSuccess && callsStatus?.receipts?.[0]) {
-      const tier = tiers.find((t) => t.id === selectedTier);
-      trackTransaction(
-        callsStatus.receipts[0].transactionHash,
-        `Purchase ${tier?.name || "Wallet"} Tier`
-      );
+      // const tier = tiers.find((t) => t.id === selectedTier);
+      // trackTransaction(
+      //   callsStatus.receipts[0].transactionHash,
+      //   `Purchase ${tier?.name || "Wallet"} Tier`
+      // );
       // Extract requestId from transaction receipt
       extractRequestIdFromReceipt(callsStatus.receipts[0].logs);
     }

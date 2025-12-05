@@ -59,52 +59,52 @@ export function EventListener() {
   };
 
   // VendingMachine Events
-  useWatchContractEvent({
-    address: VendingMachineAddress as `0x${string}`,
-    abi: VendingMachineAbi,
-    eventName: "WalletReady",
-    enabled: isOnline,
-    pollingInterval: 4000, // Poll every 4 seconds instead of default 1s
-    onLogs(logs) {
-      logs.forEach((log) => {
-        const args = (log as any).args as { requestId: bigint };
-        addNotification(
-          "success",
-          "Wallet Ready! 🎉",
-          `Your purchased wallet is ready to retrieve! Request ID: ${args.requestId}`
-        );
-      });
-    },
-    onError(error) {
-      console.warn(
-        "EventListener: Network error, will retry when online",
-        error.message
-      );
-    },
-  });
+  // useWatchContractEvent({
+  //   address: VendingMachineAddress as `0x${string}`,
+  //   abi: VendingMachineAbi,
+  //   eventName: "WalletReady",
+  //   enabled: isOnline,
+  //   pollingInterval: 4000, // Poll every 4 seconds instead of default 1s
+  //   onLogs(logs) {
+  //     logs.forEach((log) => {
+  //       const args = (log as any).args as { requestId: bigint };
+  //       addNotification(
+  //         "success",
+  //         "Wallet Ready! 🎉",
+  //         `Your purchased wallet is ready to retrieve! Request ID: ${args.requestId}`
+  //       );
+  //     });
+  //   },
+  //   onError(error) {
+  //     console.warn(
+  //       "EventListener: Network error, will retry when online",
+  //       error.message
+  //     );
+  //   },
+  // });
 
-  useWatchContractEvent({
-    address: VendingMachineAddress as `0x${string}`,
-    abi: VendingMachineAbi,
-    eventName: "PurchaseInitiated",
-    enabled: isOnline,
-    pollingInterval: 4000,
-    onLogs(logs) {
-      logs.forEach((log) => {
-        addNotification(
-          "info",
-          "Purchase Initiated ⏳",
-          `Wallet purchase started! Waiting for Chainlink VRF...`
-        );
-      });
-    },
-    onError(error) {
-      console.warn(
-        "EventListener: Network error, will retry when online",
-        error.message
-      );
-    },
-  });
+  // useWatchContractEvent({
+  //   address: VendingMachineAddress as `0x${string}`,
+  //   abi: VendingMachineAbi,
+  //   eventName: "PurchaseInitiated",
+  //   enabled: isOnline,
+  //   pollingInterval: 4000,
+  //   onLogs(logs) {
+  //     logs.forEach((log) => {
+  //       addNotification(
+  //         "info",
+  //         "Purchase Initiated ⏳",
+  //         `Wallet purchase started! Waiting for Chainlink VRF...`
+  //       );
+  //     });
+  //   },
+  //   onError(error) {
+  //     console.warn(
+  //       "EventListener: Network error, will retry when online",
+  //       error.message
+  //     );
+  //   },
+  // });
 
   useWatchContractEvent({
     address: VendingMachineAddress as `0x${string}`,
