@@ -795,13 +795,6 @@ export function VendingMachine() {
                     </p>
                   </div>
 
-                  <div className="bg-yellow-900/50 border border-yellow-600 rounded p-2 w-full max-w-[200px]">
-                    <p className="text-yellow-300 text-[9px] md:text-[10px] text-center mb-1">
-                      Check the <span className="font-bold">WALLET TAB</span> in
-                      a moment to retrieve your wallet
-                    </p>
-                  </div>
-
                   <button
                     onClick={() => {
                       setWalletStatus("idle");
