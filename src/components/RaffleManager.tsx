@@ -6,6 +6,7 @@ import {
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
+  usePublicClient,
 } from "wagmi";
 import { formatUnits, parseUnits } from "viem";
 import { RaffleManagerAbi, RaffleManagerAddress } from "~/lib/constants";
@@ -67,6 +68,7 @@ interface Raffle {
 
 export function RaffleManager() {
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedRaffle, setSelectedRaffle] = useState<bigint | null>(null);
   const [raffles, setRaffles] = useState<Raffle[]>([]);
@@ -144,17 +146,21 @@ export function RaffleManager() {
 
   // Fetch raffle details for each active raffle
   useEffect(() => {
-    if (!activeRaffleIds || !Array.isArray(activeRaffleIds)) return;
+    if (!activeRaffleIds || !Array.isArray(activeRaffleIds) || !publicClient)
+      return;
 
     const fetchRaffles = async () => {
       const rafflePromises = (activeRaffleIds as bigint[]).map(async (id) => {
         try {
-          const response = await fetch(`/api/raffle/${id.toString()}`);
-          if (response.ok) {
-            return await response.json();
-          }
-          return null;
-        } catch {
+          const data = await publicClient.readContract({
+            address: RaffleManagerAddress as `0x${string}`,
+            abi: RaffleManagerAbi,
+            functionName: "getRaffle",
+            args: [id],
+          });
+          return data as Raffle;
+        } catch (error) {
+          console.error(`Failed to fetch raffle ${id}`, error);
           return null;
         }
       });
@@ -164,7 +170,7 @@ export function RaffleManager() {
     };
 
     fetchRaffles();
-  }, [activeRaffleIds]);
+  }, [activeRaffleIds, publicClient]);
 
   // Check approval when buying tickets
   useEffect(() => {

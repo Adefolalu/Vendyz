@@ -6,12 +6,32 @@ import { formatUnits } from "viem";
 import { Button } from "./ui/Button";
 
 export function RaffleCard() {
-  // Read current raffle
-  const { data: currentRaffle, isLoading } = useReadContract({
+  // Read active raffle IDs
+  const { data: activeRaffleIds, isLoading: isLoadingIds } = useReadContract({
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
-    functionName: "getCurrentRaffle",
+    functionName: "getActiveRaffles",
   });
+
+  const latestRaffleId =
+    activeRaffleIds &&
+    Array.isArray(activeRaffleIds) &&
+    activeRaffleIds.length > 0
+      ? activeRaffleIds[activeRaffleIds.length - 1]
+      : undefined;
+
+  // Read current raffle
+  const { data: currentRaffle, isLoading: isLoadingRaffle } = useReadContract({
+    address: RaffleManagerAddress as `0x${string}`,
+    abi: RaffleManagerAbi,
+    functionName: "getRaffle",
+    args: latestRaffleId ? [latestRaffleId] : undefined,
+    query: {
+      enabled: !!latestRaffleId,
+    },
+  });
+
+  const isLoading = isLoadingIds || (!!latestRaffleId && isLoadingRaffle);
 
   if (isLoading) {
     return (
@@ -28,7 +48,22 @@ export function RaffleCard() {
     );
   }
 
-  if (!currentRaffle) return null;
+  if (!currentRaffle) {
+    return (
+      <div
+        className="w-full p-4 rounded-lg border-2"
+        style={{
+          backgroundColor: "#f0fdf4",
+          borderColor: "#16a34a",
+          color: "#000000",
+        }}
+      >
+        <div className="text-center text-sm font-bold">
+          No active raffle at the moment. Check back later! 🎄
+        </div>
+      </div>
+    );
+  }
 
   const raffle = currentRaffle as {
     raffleId: bigint;
