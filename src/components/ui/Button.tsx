@@ -3,6 +3,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   variant?: "primary" | "secondary" | "outline";
   size?: "sm" | "md" | "lg";
+  fullWidth?: boolean;
 }
 
 export function Button({
@@ -11,6 +12,7 @@ export function Button({
   isLoading = false,
   variant = "primary",
   size = "md",
+  fullWidth = true,
   ...props
 }: ButtonProps) {
   const baseClasses = "btn";
@@ -27,7 +29,7 @@ export function Button({
     lg: "px-4 py-2 text-sm",
   };
 
-  const fullWidthClasses = "w-full max-w-xs mx-auto block";
+  const fullWidthClasses = fullWidth ? "w-full max-w-xs mx-auto block" : "";
 
   const combinedClasses = [
     baseClasses,

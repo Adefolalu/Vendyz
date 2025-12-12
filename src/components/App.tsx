@@ -5,7 +5,7 @@ import { useMiniApp } from "@neynar/react";
 import { Header } from "~/components/ui/Header";
 import { Footer } from "~/components/ui/Footer";
 import { VendingMachine } from "~/components/VendingMachine";
-import { RaffleCard } from "~/components/RaffleCard";
+import { RaffleManager } from "~/components/RaffleManager";
 import { SponsorAuction } from "~/components/SponsorAuction";
 import { USE_WALLET } from "~/lib/constants";
 import { useNeynarUser } from "../hooks/useNeynarUser";
@@ -89,7 +89,7 @@ export default function App({ title }: AppProps = { title: "Vendyz" }) {
         {currentTab === Tab.Home && <VendingMachine />}
         {currentTab === Tab.Raffle && (
           <div className="max-w-2xl mx-auto">
-            <RaffleCard />
+            <RaffleManager />
           </div>
         )}
         {currentTab === Tab.Auction && (

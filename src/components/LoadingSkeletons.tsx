@@ -42,69 +42,41 @@ export function TierCardSkeleton() {
 
 export function RaffleCardSkeleton() {
   return (
-    <div
-      className="p-4 rounded-lg border-2 animate-pulse"
-      style={{ backgroundColor: "#f0fdf4", borderColor: "#16a34a" }}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <div
-          className="h-6 w-40 rounded"
-          style={{ backgroundColor: "#bbf7d0" }}
-        />
-        <div
-          className="h-5 w-10 rounded-full"
-          style={{ backgroundColor: "#bbf7d0" }}
-        />
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+      {/* Badge & ID */}
+      <div className="flex justify-end mb-6">
+        <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
       </div>
-      <div
-        className="mb-3 p-3 rounded-lg"
-        style={{ backgroundColor: "#dcfce7" }}
-      >
-        <div
-          className="h-3 w-20 rounded mb-2"
-          style={{ backgroundColor: "#bbf7d0" }}
-        />
-        <div
-          className="h-8 w-32 rounded"
-          style={{ backgroundColor: "#bbf7d0" }}
-        />
+
+      {/* Prize Pool */}
+      <div className="mb-6">
+        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+        <div className="h-10 w-48 bg-gray-200 dark:bg-gray-700 rounded" />
       </div>
-      <div className="mb-4">
-        <div
-          className="h-4 w-full rounded mb-2"
-          style={{ backgroundColor: "#e0f0a0" }}
-        />
-        <div
-          className="h-3 w-full rounded"
-          style={{ backgroundColor: "#d4e7a0" }}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="p-3 rounded" style={{ backgroundColor: "#f5ffdb" }}>
-          <div
-            className="h-4 w-20 rounded mb-1"
-            style={{ backgroundColor: "#e0f0a0" }}
-          />
-          <div
-            className="h-5 w-16 rounded"
-            style={{ backgroundColor: "#e0f0a0" }}
-          />
+
+      {/* Progress */}
+      <div className="mb-6">
+        <div className="flex justify-between mb-2">
+          <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded" />
+          <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded" />
         </div>
-        <div className="p-3 rounded" style={{ backgroundColor: "#f5ffdb" }}>
-          <div
-            className="h-4 w-20 rounded mb-1"
-            style={{ backgroundColor: "#e0f0a0" }}
-          />
-          <div
-            className="h-5 w-16 rounded"
-            style={{ backgroundColor: "#e0f0a0" }}
-          />
+        <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded-full" />
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+        <div>
+          <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+          <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
+        </div>
+        <div>
+          <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+          <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded" />
         </div>
       </div>
-      <div
-        className="h-12 w-full rounded"
-        style={{ backgroundColor: "#e0f0a0" }}
-      />
+
+      {/* Button */}
+      <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-xl" />
     </div>
   );
 }
