@@ -2694,7 +2694,7 @@ export const SponsorAunctionAbi = [
   },
 ];
 export const RaffleManagerAddress =
-  "0x3C20Bd88d2E29Ae66829Ced86209B0150A576DBF";
+  "0x7108C830a7A3bb96B8cC49248b1861e96Bf855B5";
 export const RaffleManagerAbi = [
   {
     inputs: [
@@ -3222,6 +3222,11 @@ export const RaffleManagerAbi = [
         name: "duration",
         type: "uint256",
       },
+      {
+        internalType: "bool",
+        name: "isContinuous",
+        type: "bool",
+      },
     ],
     name: "createRaffle",
     outputs: [
@@ -3390,6 +3395,11 @@ export const RaffleManagerAbi = [
             internalType: "uint256",
             name: "duration",
             type: "uint256",
+          },
+          {
+            internalType: "bool",
+            name: "isContinuous",
+            type: "bool",
           },
         ],
         internalType: "struct RaffleManager.Raffle",
@@ -3674,6 +3684,11 @@ export const RaffleManagerAbi = [
         internalType: "uint256",
         name: "duration",
         type: "uint256",
+      },
+      {
+        internalType: "bool",
+        name: "isContinuous",
+        type: "bool",
       },
     ],
     stateMutability: "view",

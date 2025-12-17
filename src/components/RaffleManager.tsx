@@ -8,7 +8,8 @@ import {
   useWaitForTransactionReceipt,
   usePublicClient,
 } from "wagmi";
-import { formatUnits, parseUnits } from "viem";
+import { useSendCalls, useCallsStatus } from "wagmi";
+import { formatUnits, parseUnits, encodeFunctionData } from "viem";
 import { RaffleManagerAbi, RaffleManagerAddress } from "~/lib/constants";
 import { Button } from "./ui/Button";
 import {
@@ -64,6 +65,7 @@ interface Raffle {
   startTime: bigint;
   endTime: bigint;
   duration: bigint;
+  isContinuous: boolean;
 }
 
 export function RaffleManager() {
@@ -79,6 +81,7 @@ export function RaffleManager() {
   const [maxTickets, setMaxTickets] = useState("100");
   const [minTickets, setMinTickets] = useState("10");
   const [duration, setDuration] = useState("7");
+  const [isContinuous, setIsContinuous] = useState(true);
 
   // Buy tickets state
   const [ticketAmount, setTicketAmount] = useState("1");
@@ -112,6 +115,22 @@ export function RaffleManager() {
     writeContract: writeFinalize,
     isPending: isFinalizePending,
   } = useWriteContract();
+
+  // Batch transaction hooks
+  const {
+    sendCalls,
+    data: callsId,
+    isPending: isCallsPending,
+  } = useSendCalls();
+
+  const { data: callsStatus } = useCallsStatus({
+    id: typeof callsId === "string" ? callsId : (callsId?.id ?? ""),
+    query: {
+      enabled: Boolean(typeof callsId === "string" ? callsId : callsId?.id),
+      refetchInterval: (data) =>
+        data.state.data?.status === "pending" ? 500 : false,
+    },
+  });
 
   const { isLoading: isCreateConfirming, isSuccess: isCreateSuccess } =
     useWaitForTransactionReceipt({
@@ -259,6 +278,18 @@ export function RaffleManager() {
     }
   }, [finalizeHash, isFinalizeConfirming, isFinalizeSuccess]);
 
+  // Track batch transaction status
+  useEffect(() => {
+    if (callsStatus?.status === "success") {
+      setSelectedRaffle(null);
+      setTicketAmount("1");
+      refetchRaffles();
+      // Assuming we can track it, but callsId is not a hash.
+      // We might need to adjust tracking logic if it strictly expects 0x hash.
+      // For now, we'll just rely on the UI state updates.
+    }
+  }, [callsStatus, refetchRaffles]);
+
   const handleCreateRaffle = async () => {
     if (
       !tokenAddress ||
@@ -295,6 +326,7 @@ export function RaffleManager() {
           BigInt(maxTickets),
           BigInt(minTickets),
           durationSeconds,
+          isContinuous,
         ],
       });
     } catch (error) {
@@ -358,6 +390,49 @@ export function RaffleManager() {
     }
   };
 
+  const handleBuyWithBatch = async () => {
+    if (!selectedRaffle || !ticketAmount) return;
+    const raffle = raffles.find((r) => r.raffleId === selectedRaffle);
+    if (!raffle) return;
+
+    try {
+      const totalCost = raffle.ticketPrice * BigInt(ticketAmount);
+
+      // 1. Approve Call
+      const approveCall = {
+        to: USDC_ADDRESS as `0x${string}`,
+        data: encodeFunctionData({
+          abi: ERC20_ABI,
+          functionName: "approve",
+          args: [RaffleManagerAddress as `0x${string}`, totalCost],
+        }),
+        value: BigInt(0),
+      };
+
+      // 2. Buy Tickets Call
+      const buyCall = {
+        to: RaffleManagerAddress as `0x${string}`,
+        data: encodeFunctionData({
+          abi: RaffleManagerAbi,
+          functionName: "buyTickets",
+          args: [selectedRaffle, BigInt(ticketAmount)],
+        }),
+        value: BigInt(0),
+      };
+
+      sendCalls({
+        calls: [approveCall, buyCall],
+      });
+    } catch (error) {
+      console.error("Batch transaction failed:", error);
+      showError(
+        "Transaction Failed",
+        "Failed to send batch transaction",
+        undefined
+      );
+    }
+  };
+
   const handleFinalizeRaffle = async (raffleId: bigint) => {
     try {
       writeFinalize({
@@ -413,7 +488,7 @@ export function RaffleManager() {
             Create your own raffle or join existing ones to win big!
           </p>
         </div>
-        {isConnected && (
+        {isConnected && raffles.length === 0 && (
           <Button
             onClick={() => setShowCreateForm(!showCreateForm)}
             fullWidth={false}
@@ -539,6 +614,23 @@ export function RaffleManager() {
                 className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
               />
             </div>
+            <div className="col-span-full flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700">
+              <input
+                type="checkbox"
+                checked={isContinuous}
+                onChange={(e) => setIsContinuous(e.target.checked)}
+                className="w-5 h-5 text-green-600 rounded focus:ring-green-500 border-gray-300"
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-900 dark:text-white">
+                  Continuous Raffle
+                </label>
+                <p className="text-xs text-gray-500">
+                  Automatically start a new raffle with same settings when this
+                  one ends.
+                </p>
+              </div>
+            </div>
           </div>
           <Button
             onClick={handleCreateRaffle}
@@ -569,10 +661,8 @@ export function RaffleManager() {
           </p>
         </div>
       ) : activeRaffleIds === undefined ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <RaffleCardSkeleton key={i} />
-          ))}
+        <div className="grid grid-cols-1 gap-6">
+          <RaffleCardSkeleton />
         </div>
       ) : raffles.length === 0 ? (
         <div className="text-center py-16 bg-green-50 dark:bg-green-900/10 rounded-3xl border-2 border-dashed border-green-200 dark:border-green-800">
@@ -593,7 +683,7 @@ export function RaffleManager() {
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {raffles.map((raffle) => {
             const progress = calculateProgress(raffle);
             const isCreator =
@@ -605,66 +695,78 @@ export function RaffleManager() {
             return (
               <div
                 key={raffle.raffleId.toString()}
-                className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300"
+                className="group relative bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border-4 border-green-100 dark:border-green-900/30 transition-all duration-300 hover:scale-[1.01]"
               >
                 {/* Badge */}
-                <div className="absolute top-4 right-4 flex gap-2">
+                <div className="absolute top-6 right-6 flex gap-2">
                   {isCreator && (
-                    <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 rounded-lg">
+                    <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 rounded-full">
                       Owner
                     </span>
                   )}
-                  <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg">
+                  <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-full">
                     #{raffle.raffleId.toString()}
                   </span>
                 </div>
 
                 {/* Header */}
-                <div className="mb-6">
-                  <div className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">
-                    Prize Pool
+                <div className="mb-8">
+                  <div className="text-sm font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-2">
+                    Current Prize Pool
                   </div>
-                  <div className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                  <div className="text-6xl font-black text-gray-900 dark:text-white tracking-tighter">
                     ${prizePool.toLocaleString()}
-                    <span className="text-sm font-normal text-gray-400 ml-1">
+                    <span className="text-2xl font-bold text-gray-400 ml-2">
                       USDC
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-4">
+                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                      ✨ 90% to Winner
+                    </span>
+                    <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+                      🏠 10% House Fee
                     </span>
                   </div>
                 </div>
 
                 {/* Progress */}
-                <div className="mb-6">
-                  <div className="flex justify-between text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                <div className="mb-8">
+                  <div className="flex justify-between text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">
                     <span>Progress</span>
-                    <span>
+                    <span className="text-gray-900 dark:text-white">
                       {raffle.ticketsSold.toString()} /{" "}
-                      {raffle.maxTickets.toString()}
+                      {raffle.maxTickets.toString()} Tickets
                     </span>
                   </div>
-                  <div className="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div className="h-6 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
                     <div
-                      className="h-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-500 ease-out"
-                      style={{ width: `${Math.min(progress, 100)}%` }}
-                    />
+                      className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 transition-all duration-500 ease-out relative"
+                      style={{ width: `${Math.max(2, progress)}%` }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                    </div>
                   </div>
-                  <div className="mt-2 text-xs text-right text-emerald-600 dark:text-emerald-400 font-medium">
+                  <div className="mt-2 text-sm text-right text-emerald-600 dark:text-emerald-400 font-bold">
                     {progress.toFixed(0)}% Sold
                   </div>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
                       Ticket Price
                     </div>
-                    <div className="font-bold text-gray-900 dark:text-white">
+                    <div className="text-3xl font-black text-gray-900 dark:text-white">
                       ${ticketPrice}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-500 mb-1">Ends In</div>
-                    <div className="font-bold text-gray-900 dark:text-white">
+                  <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                      Ends In
+                    </div>
+                    <div className="text-3xl font-black text-gray-900 dark:text-white">
                       {formatTimeRemaining(raffle.endTime)}
                     </div>
                   </div>
@@ -675,7 +777,7 @@ export function RaffleManager() {
                   <Button
                     onClick={() => handleFinalizeRaffle(raffle.raffleId)}
                     disabled={isFinalizePending || isFinalizeConfirming}
-                    className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/20 rounded-xl font-bold"
+                    className="w-full py-5 text-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 rounded-2xl font-black"
                   >
                     {isFinalizePending || isFinalizeConfirming
                       ? "Finalizing..."
@@ -685,7 +787,7 @@ export function RaffleManager() {
                   <Button
                     onClick={() => setSelectedRaffle(raffle.raffleId)}
                     disabled={raffle.completed || raffle.cancelled}
-                    className="w-full py-3 bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white shadow-lg rounded-xl font-bold transition-transform active:scale-95"
+                    className="w-full py-5 text-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white shadow-xl rounded-2xl font-black transition-transform active:scale-95"
                   >
                     Buy Tickets 🎫
                   </Button>
@@ -734,12 +836,12 @@ export function RaffleManager() {
                     onChange={(e) => setTicketAmount(e.target.value)}
                     className="flex-1 text-center py-2 bg-transparent text-gray-900 dark:text-white text-2xl font-bold outline-none border-b-2 border-gray-200 focus:border-green-500 transition-colors"
                     min="1"
-                    max="50"
+                    max="100"
                   />
                   <button
                     onClick={() =>
                       setTicketAmount(
-                        Math.min(50, Number(ticketAmount) + 1).toString()
+                        Math.min(100, Number(ticketAmount) + 1).toString()
                       )
                     }
                     className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg font-bold hover:bg-gray-200 transition-colors"
@@ -764,27 +866,15 @@ export function RaffleManager() {
               </div>
 
               <div className="space-y-3">
-                {needsApproval ? (
-                  <Button
-                    onClick={handleApprove}
-                    disabled={isApprovalPending || isApprovalConfirming}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
-                  >
-                    {isApprovalPending || isApprovalConfirming
-                      ? "Approving..."
-                      : "1. Approve USDC"}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleBuyTickets}
-                    disabled={isBuyPending || isBuyConfirming}
-                    className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-600/20"
-                  >
-                    {isBuyPending || isBuyConfirming
-                      ? "Processing..."
-                      : "Confirm Purchase"}
-                  </Button>
-                )}
+                <Button
+                  onClick={handleBuyWithBatch}
+                  disabled={isCallsPending || callsStatus?.status === "pending"}
+                  className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-600/20"
+                >
+                  {isCallsPending || callsStatus?.status === "pending"
+                    ? "Processing..."
+                    : `Buy ${ticketAmount} Ticket(s)`}
+                </Button>
 
                 <button
                   onClick={() => {
@@ -813,7 +903,7 @@ export function RaffleManager() {
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Create a raffle with your own rules: ticket price, duration, and
-              prize pool.
+              wallet value.
             </p>
           </div>
           <div className="flex gap-3">
@@ -821,8 +911,8 @@ export function RaffleManager() {
               2
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Participants buy tickets. Each ticket is a chance to win the
-              entire pot.
+              Participants buy tickets. Each ticket is a chance to win a
+              pre-funded wallet.
             </p>
           </div>
           <div className="flex gap-3">
@@ -830,8 +920,8 @@ export function RaffleManager() {
               3
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Winner is selected randomly on-chain. 90% goes to winner, 10% to
-              treasury.
+              Winner is selected randomly on-chain. They receive a wallet funded
+              with tokens worth the total value.
             </p>
           </div>
         </div>

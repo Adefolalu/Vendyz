@@ -83,71 +83,84 @@ export function RaffleCard() {
 
   return (
     <div
-      className="w-full p-4 rounded-lg border-2"
+      className="w-full p-8 rounded-3xl border-4 shadow-xl transform hover:scale-[1.02] transition-all duration-300"
       style={{
         backgroundColor: "#f0fdf4",
         borderColor: "#16a34a",
         color: "#000000",
       }}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-xl font-bold flex items-center gap-2">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-black flex items-center gap-3 tracking-tight">
           🎄 Holiday Raffle
         </h2>
-        <span className="text-xs font-semibold px-2 py-0.5 bg-red-600 text-white rounded-full">
+        <span className="text-sm font-bold px-4 py-1.5 bg-red-600 text-white rounded-full shadow-lg shadow-red-600/20">
           #{raffle.raffleId.toString()}
         </span>
       </div>
 
       {/* Prize Pool */}
       <div
-        className="mb-3 p-3 rounded-lg"
+        className="mb-8 p-6 rounded-2xl border-2 border-green-200 shadow-inner"
         style={{ backgroundColor: "#dcfce7", color: "#000000" }}
       >
-        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-          Prize Pool
+        <p className="text-sm font-bold text-green-800 uppercase tracking-wider mb-2">
+          Current Prize Pool
         </p>
-        <p className="text-2xl font-bold text-red-600 dark:text-red-500">
-          ${prizePoolUSDC} USDC
+        <p className="text-5xl font-black text-red-600 dark:text-red-500 tracking-tighter mb-2">
+          ${prizePoolUSDC} <span className="text-2xl text-red-400">USDC</span>
         </p>
-        <p className="text-[10px] text-gray-500 mt-1">90% goes to winner</p>
+        <div className="flex items-center gap-2 text-xs font-bold text-green-700 bg-green-100 w-fit px-3 py-1 rounded-full">
+          <span>✨ 90% to Winner</span>
+          <span>•</span>
+          <span>🏠 10% House Fee</span>
+        </div>
       </div>
 
       {/* Progress */}
-      <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-gray-600 dark:text-gray-400">Tickets Sold</span>
-          <span className="font-semibold">
+      <div className="mb-8">
+        <div className="flex justify-between text-sm font-bold mb-3">
+          <span className="text-gray-600">Tickets Sold</span>
+          <span className="text-green-700">
             {raffle.ticketsSold.toString()} / {raffle.maxTickets.toString()}
           </span>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+        <div className="w-full bg-gray-200 rounded-full h-6 shadow-inner overflow-hidden border border-gray-300">
           <div
-            className="bg-gradient-to-r from-red-500 to-green-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+            className="bg-gradient-to-r from-red-500 via-orange-500 to-green-500 h-full transition-all duration-500 ease-out relative"
+            style={{ width: `${Math.max(5, progress)}%` }}
+          >
+            <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+          </div>
+        </div>
+        <div className="mt-2 text-right text-xs font-bold text-green-600">
+          {progress.toFixed(1)}% Filled
         </div>
       </div>
 
       {/* Ticket Info */}
-      <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+      <div className="grid grid-cols-2 gap-4 mb-8">
         <div
-          className="p-2 rounded"
+          className="p-4 rounded-2xl border border-green-200"
           style={{ backgroundColor: "#dcfce7", color: "#000000" }}
         >
-          <p className="text-gray-600 dark:text-gray-400 mb-1">Ticket Price</p>
-          <p className="font-bold">$1 USDC</p>
+          <p className="text-xs font-bold text-green-800 uppercase mb-1">
+            Ticket Price
+          </p>
+          <p className="text-2xl font-black">$1 USDC</p>
         </div>
         <div
-          className="p-2 rounded"
+          className="p-4 rounded-2xl border border-green-200"
           style={{ backgroundColor: "#dcfce7", color: "#000000" }}
         >
-          <p className="text-gray-600 dark:text-gray-400 mb-1">Max Per User</p>
-          <p className="font-bold">5 tickets</p>
+          <p className="text-xs font-bold text-green-800 uppercase mb-1">
+            Max Per User
+          </p>
+          <p className="text-2xl font-black">100 Tickets</p>
         </div>
       </div>
 
-      <Button className="w-full bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700 text-sm py-2">
+      <Button className="w-full bg-gradient-to-r from-red-600 to-green-600 hover:from-red-700 hover:to-green-700 text-xl font-black py-6 rounded-2xl shadow-xl shadow-green-600/20 transform active:scale-95 transition-all">
         Buy Tickets 🎫
       </Button>
     </div>
