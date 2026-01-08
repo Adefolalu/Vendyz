@@ -7,10 +7,15 @@ import {
   useWriteContract,
   useWaitForTransactionReceipt,
   usePublicClient,
+  useSignMessage,
 } from "wagmi";
 import { useSendCalls, useCallsStatus } from "wagmi";
 import { formatUnits, parseUnits, encodeFunctionData } from "viem";
-import { RaffleManagerAbi, RaffleManagerAddress } from "~/lib/constants";
+import {
+  RaffleManagerAbi,
+  RaffleManagerAddress,
+  API_BASE_URL,
+} from "~/lib/constants";
 import { Button } from "./ui/Button";
 import {
   parseContractError,
@@ -86,6 +91,12 @@ export function RaffleManager() {
   // Buy tickets state
   const [ticketAmount, setTicketAmount] = useState("1");
   const [needsApproval, setNeedsApproval] = useState(false);
+
+  // My Wins state
+  const { signMessageAsync } = useSignMessage();
+  const [myWins, setMyWins] = useState<any[]>([]);
+  const [claimedWallet, setClaimedWallet] = useState<any>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
 
   // Read active raffle IDs
   const { data: activeRaffleIds, refetch: refetchRaffles } = useReadContract({
@@ -289,6 +300,81 @@ export function RaffleManager() {
       // For now, we'll just rely on the UI state updates.
     }
   }, [callsStatus, refetchRaffles]);
+
+  // Fetch user's wins
+  useEffect(() => {
+    if (!address) return;
+
+    const fetchWins = async () => {
+      try {
+        if (!API_BASE_URL) {
+          console.error("API_BASE_URL is not defined");
+          return;
+        }
+        const response = await fetch(`${API_BASE_URL}/api/wallets/${address}`);
+        const data = await response.json();
+        if (data.success) {
+          // Filter for raffle wins
+          const raffleWins = data.data.wallets.filter((w: any) =>
+            w.requestId.startsWith("raffle-")
+          );
+          setMyWins(raffleWins);
+        }
+      } catch (error) {
+        console.error("Failed to fetch wins:", error);
+      }
+    };
+
+    fetchWins();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchWins, 30000);
+    return () => clearInterval(interval);
+  }, [address]);
+
+  const handleClaimPrize = async (requestId: string) => {
+    try {
+      setIsClaiming(true);
+      const message = `Retrieve wallet for request ${requestId}`;
+      const message = `Retrieve wallet for request ${requestId}`;
+      const signature = await signMessageAsync({ message });
+
+      if (!API_BASE_URL) {
+        throw new Error("Backend URL not configured");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/wallet/${requestId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        dy: JSON.stringify({
+          buyerAddress: address,
+          signature,
+          message,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setClaimedWallet(data.data);
+      } else {
+        showError(
+          "Claim Failed",
+          data.error || "Failed to retrieve wallet",
+          undefined
+        );
+      }
+    } catch (error) {
+      console.error("Claim error:", error);
+      showError(
+        "Claim Failed",
+        "Failed to sign message or retrieve wallet",
+        undefined
+      );
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   const handleCreateRaffle = async () => {
     if (
@@ -646,6 +732,119 @@ export function RaffleManager() {
               "Launch Raffle 🚀"
             )}
           </Button>
+        </div>
+      )}
+
+      {/* My Wins Section */}
+      {isConnected && myWins.length > 0 && (
+        <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-2xl border border-yellow-200 dark:border-yellow-800">
+          <h3 className="text-xl font-bold text-yellow-800 dark:text-yellow-200 mb-4 flex items-center gap-2">
+            <span>🏆</span> Your Winnings
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myWins.map((win) => (
+              <div
+                key={win.requestId}
+                className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/50 shadow-sm"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white">
+                      Raffle #{win.requestId.replace("raffle-", "")}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Won on {new Date(win.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-green-600 dark:text-green-400">
+                      ${Number(win.actualValue).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-400">Value</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleClaimPrize(win.requestId)}
+                  disabled={isClaiming}
+                  className="w-full mt-2 py-2 text-sm bg-yellow-500 hover:bg-yellow-600 text-white"
+                >
+                  {isClaiming ? "Verifying..." : "🔑 Reveal Private Key"}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Claimed Wallet Modal */}
+      {claimedWallet && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-2xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                🎉
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Prize Wallet Details
+              </h3>
+              <p className="text-red-500 text-sm mt-2 font-bold">
+                ⚠️ SAVE THIS IMMEDIATELY. DO NOT SHARE.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Wallet Address
+                </label>
+                <div className="p-3 bg-gray-100 dark:bg-gray-900 rounded-xl font-mono text-sm break-all">
+                  {claimedWallet.walletAddress}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Private Key
+                </label>
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 rounded-xl font-mono text-sm break-all text-red-600 dark:text-red-400">
+                  {claimedWallet.privateKey}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Mnemonic Phrase
+                </label>
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900 rounded-xl font-mono text-sm break-words text-red-600 dark:text-red-400">
+                  {claimedWallet.mnemonic}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Tokens Included
+                </label>
+                <div className="grid grid-cols-1 gap-2">
+                  {claimedWallet.tokens.map((token: any, i: number) => (
+                    <div
+                      key={i}
+                      className="flex justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded-lg text-sm"
+                    >
+                      <span>{token.symbol}</span>
+                      <span className="font-mono">{token.amount}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                onClick={() => setClaimedWallet(null)}
+                className="w-full py-3 bg-gray-900 text-white rounded-xl"
+              >
+                Close & Clear
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

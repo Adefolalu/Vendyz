@@ -19,6 +19,12 @@ import { type AccountAssociation } from "@farcaster/miniapp-core/src/manifest";
 export const APP_URL: string = process.env.NEXT_PUBLIC_URL!;
 
 /**
+ * The base URL of the backend API.
+ * Used for fetching wallet data and other backend services.
+ */
+export const API_BASE_URL: string = process.env.NEXT_PUBLIC_API_URL!;
+
+/**
  * The name of the mini app as displayed to users.
  * Used in titles, headers, and app store listings.
  */

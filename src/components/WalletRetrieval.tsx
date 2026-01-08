@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { Button } from "./ui/Button";
+import { API_BASE_URL } from "~/lib/constants";
 
 interface WalletData {
   address: string;
@@ -19,6 +20,7 @@ interface WalletData {
 
 export function WalletRetrieval() {
   const { address, isConnected } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [requestId, setRequestId] = useState("");
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,22 +36,30 @@ export function WalletRetrieval() {
 
     setLoading(true);
     setError(null);
-
     try {
-      // TODO: Replace with actual backend API call
-      const response = await fetch(`/api/wallet/${requestId}`, {
-        method: "GET",
+      const message = `Retrieve wallet for request ${requestId}`;
+      const signature = await signMessageAsync({ message });
+
+      const response = await fetch(`${API_BASE_URL}/api/wallet/${requestId}`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          buyerAddress: address,
+          signature,
+          message,
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error("Wallet not found or not ready yet");
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Wallet not found or not ready yet");
       }
 
-      const data = await response.json();
-      setWallet(data);
+      setWallet(data.data);
+    } catch (err) {a);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to retrieve wallet"
