@@ -335,7 +335,6 @@ export function RaffleManager() {
     try {
       setIsClaiming(true);
       const message = `Retrieve wallet for request ${requestId}`;
-      const message = `Retrieve wallet for request ${requestId}`;
       const signature = await signMessageAsync({ message });
 
       if (!API_BASE_URL) {
@@ -347,7 +346,7 @@ export function RaffleManager() {
         headers: {
           "Content-Type": "application/json",
         },
-        dy: JSON.stringify({
+        body: JSON.stringify({
           buyerAddress: address,
           signature,
           message,
