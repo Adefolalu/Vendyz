@@ -59,7 +59,6 @@ export function WalletRetrieval() {
       }
 
       setWallet(data.data);
-    } catch (err) {a);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to retrieve wallet"
