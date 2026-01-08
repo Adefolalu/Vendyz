@@ -22,6 +22,10 @@ interface Notification {
 export function EventListener() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOnline, setIsOnline] = useState(true);
+  // Toggle used to force re-registration of JSON-RPC filters when the
+  // provider returns a stale/expired filter error (e.g. Alchemy "filter not found").
+  const [watchToggle, setWatchToggle] = useState(true);
+  const watchEnabled = isOnline && watchToggle;
 
   // Monitor online/offline status
   useEffect(() => {
@@ -58,54 +62,6 @@ export function EventListener() {
     }, 10000);
   };
 
-  // VendingMachine Events
-  // useWatchContractEvent({
-  //   address: VendingMachineAddress as `0x${string}`,
-  //   abi: VendingMachineAbi,
-  //   eventName: "WalletReady",
-  //   enabled: isOnline,
-  //   pollingInterval: 4000, // Poll every 4 seconds instead of default 1s
-  //   onLogs(logs) {
-  //     logs.forEach((log) => {
-  //       const args = (log as any).args as { requestId: bigint };
-  //       addNotification(
-  //         "success",
-  //         "Wallet Ready! 🎉",
-  //         `Your purchased wallet is ready to retrieve! Request ID: ${args.requestId}`
-  //       );
-  //     });
-  //   },
-  //   onError(error) {
-  //     console.warn(
-  //       "EventListener: Network error, will retry when online",
-  //       error.message
-  //     );
-  //   },
-  // });
-
-  // useWatchContractEvent({
-  //   address: VendingMachineAddress as `0x${string}`,
-  //   abi: VendingMachineAbi,
-  //   eventName: "PurchaseInitiated",
-  //   enabled: isOnline,
-  //   pollingInterval: 4000,
-  //   onLogs(logs) {
-  //     logs.forEach((log) => {
-  //       addNotification(
-  //         "info",
-  //         "Purchase Initiated ⏳",
-  //         `Wallet purchase started! Waiting for Chainlink VRF...`
-  //       );
-  //     });
-  //   },
-  //   onError(error) {
-  //     console.warn(
-  //       "EventListener: Network error, will retry when online",
-  //       error.message
-  //     );
-  //   },
-  // });
-
   useWatchContractEvent({
     address: VendingMachineAddress as `0x${string}`,
     abi: VendingMachineAbi,
@@ -125,8 +81,15 @@ export function EventListener() {
     onError(error) {
       console.warn(
         "EventListener: Network error, will retry when online",
-        error.message
+        (error as any)?.message
       );
+      // If provider reports a missing filter, toggle the watch to re-create filters
+      // (Alchemy often returns `filter not found` for expired filters).
+      const msg = (error as any)?.message || "";
+      const code = (error as any)?.code;
+      if (msg.includes("filter not found") || code === -32000) {
+        setWatchToggle((v) => !v);
+      }
     },
   });
 
@@ -135,7 +98,7 @@ export function EventListener() {
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     eventName: "AuctionFinalized",
-    enabled: isOnline,
+    enabled: watchEnabled,
     pollingInterval: 8000, // Less frequent for auction events (8s)
     onLogs(logs) {
       logs.forEach((log) => {
@@ -150,8 +113,13 @@ export function EventListener() {
     onError(error) {
       console.warn(
         "EventListener: Network error, will retry when online",
-        error.message
+        (error as any)?.message
       );
+      const msg = (error as any)?.message || "";
+      const code = (error as any)?.code;
+      if (msg.includes("filter not found") || code === -32000) {
+        setWatchToggle((v) => !v);
+      }
     },
   });
 
@@ -159,7 +127,7 @@ export function EventListener() {
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     eventName: "BidPlaced",
-    enabled: isOnline,
+    enabled: watchEnabled,
     pollingInterval: 8000,
     onLogs(logs) {
       logs.forEach((log) => {
@@ -173,8 +141,13 @@ export function EventListener() {
     onError(error) {
       console.warn(
         "EventListener: Network error, will retry when online",
-        error.message
+        (error as any)?.message
       );
+      const msg = (error as any)?.message || "";
+      const code = (error as any)?.code;
+      if (msg.includes("filter not found") || code === -32000) {
+        setWatchToggle((v) => !v);
+      }
     },
   });
 
@@ -182,7 +155,7 @@ export function EventListener() {
     address: SponsorAunctionAddress as `0x${string}`,
     abi: SponsorAunctionAbi,
     eventName: "SponsorAdded",
-    enabled: isOnline,
+    enabled: watchEnabled,
     pollingInterval: 8000,
     onLogs(logs) {
       logs.forEach((log) => {
@@ -196,8 +169,13 @@ export function EventListener() {
     onError(error) {
       console.warn(
         "EventListener: Network error, will retry when online",
-        error.message
+        (error as any)?.message
       );
+      const msg = (error as any)?.message || "";
+      const code = (error as any)?.code;
+      if (msg.includes("filter not found") || code === -32000) {
+        setWatchToggle((v) => !v);
+      }
     },
   });
 
@@ -206,7 +184,7 @@ export function EventListener() {
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
     eventName: "RaffleCreated",
-    enabled: isOnline,
+    enabled: watchEnabled,
     pollingInterval: 10000, // Raffle events are less frequent (10s)
     onLogs(logs) {
       logs.forEach((log) => {
@@ -221,8 +199,13 @@ export function EventListener() {
     onError(error) {
       console.warn(
         "EventListener: Network error, will retry when online",
-        error.message
+        (error as any)?.message
       );
+      const msg = (error as any)?.message || "";
+      const code = (error as any)?.code;
+      if (msg.includes("filter not found") || code === -32000) {
+        setWatchToggle((v) => !v);
+      }
     },
   });
 
@@ -230,7 +213,7 @@ export function EventListener() {
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
     eventName: "WinnerSelected",
-    enabled: isOnline,
+    enabled: watchEnabled,
     pollingInterval: 10000,
     onLogs(logs) {
       logs.forEach((log) => {
@@ -245,8 +228,13 @@ export function EventListener() {
     onError(error) {
       console.warn(
         "EventListener: Network error, will retry when online",
-        error.message
+        (error as any)?.message
       );
+      const msg = (error as any)?.message || "";
+      const code = (error as any)?.code;
+      if (msg.includes("filter not found") || code === -32000) {
+        setWatchToggle((v) => !v);
+      }
     },
   });
 

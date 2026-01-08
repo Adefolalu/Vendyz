@@ -98,7 +98,17 @@ export function RaffleManager() {
   const [claimedWallet, setClaimedWallet] = useState<any>(null);
   const [isClaiming, setIsClaiming] = useState(false);
 
-  // Read active raffle IDs
+  // Past Raffles state
+  const [showPastRaffles, setShowPastRaffles] = useState(false);
+
+  // Read total raffles count
+  const { data: totalRaffles } = useReadContract({
+    address: RaffleManagerAddress as `0x${string}`,
+    abi: RaffleManagerAbi,
+    functionName: "totalRaffles",
+  });
+
+  // Read active raffle IDs (for backward compatibility)
   const { data: activeRaffleIds, refetch: refetchRaffles } = useReadContract({
     address: RaffleManagerAddress as `0x${string}`,
     abi: RaffleManagerAbi,
@@ -174,13 +184,14 @@ export function RaffleManager() {
         : undefined,
   });
 
-  // Fetch raffle details for each active raffle
+  // Fetch raffle details for all raffles (not just active ones)
   useEffect(() => {
-    if (!activeRaffleIds || !Array.isArray(activeRaffleIds) || !publicClient)
-      return;
+    if (!totalRaffles || !publicClient) return;
 
     const fetchRaffles = async () => {
-      const rafflePromises = (activeRaffleIds as bigint[]).map(async (id) => {
+      const total = Number(totalRaffles);
+      const rafflePromises = Array.from({ length: total }, async (_, i) => {
+        const id = BigInt(i + 1); // Raffle IDs start from 1
         try {
           const data = await publicClient.readContract({
             address: RaffleManagerAddress as `0x${string}`,
@@ -200,7 +211,7 @@ export function RaffleManager() {
     };
 
     fetchRaffles();
-  }, [activeRaffleIds, publicClient]);
+  }, [totalRaffles, publicClient]);
 
   // Check approval when buying tickets
   useEffect(() => {
@@ -533,6 +544,26 @@ export function RaffleManager() {
     }
   };
 
+  const handleCancelAndRefund = async (raffleId: bigint) => {
+    try {
+      showError(
+        "Cancel & Refund",
+        "Initiating cancel + refund transaction. Refunds will be processed on-chain.",
+        undefined
+      );
+      writeFinalize({
+        address: RaffleManagerAddress as `0x${string}`,
+        abi: RaffleManagerAbi,
+        functionName: "finalizeRaffle",
+        args: [raffleId],
+      });
+    } catch (error) {
+      console.error("Cancel & refund failed:", error);
+      const parsedError = parseContractError(error);
+      showError(parsedError.title, parsedError.message, parsedError.action);
+    }
+  };
+
   const formatTimeRemaining = (endTime: bigint) => {
     const now = Math.floor(Date.now() / 1000);
     const remaining = Number(endTime) - now;
@@ -559,6 +590,17 @@ export function RaffleManager() {
     );
   };
 
+  const canCancelAndRefund = (raffle: Raffle) => {
+    const now = Math.floor(Date.now() / 1000);
+    const hasEnded = Number(raffle.endTime) <= now;
+    return (
+      !raffle.completed &&
+      !raffle.cancelled &&
+      hasEnded &&
+      raffle.ticketsSold < raffle.minTickets
+    );
+  };
+
   const selectedRaffleData = raffles.find((r) => r.raffleId === selectedRaffle);
 
   return (
@@ -573,18 +615,30 @@ export function RaffleManager() {
             Create your own raffle or join existing ones to win big!
           </p>
         </div>
-        {isConnected && raffles.length === 0 && (
-          <Button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            fullWidth={false}
-            className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
-              showCreateForm
-                ? "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
-                : "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20"
-            }`}
-          >
-            {showCreateForm ? "Cancel" : "+ Create Raffle"}
-          </Button>
+        {isConnected && (
+          <div className="flex gap-3">
+            <Button
+              onClick={() => setShowPastRaffles(true)}
+              fullWidth={false}
+              className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all duration-200"
+            >
+              📚 Past Raffles
+            </Button>
+            {raffles.filter((raffle) => !raffle.completed && !raffle.cancelled)
+              .length === 0 && (
+              <Button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                fullWidth={false}
+                className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                  showCreateForm
+                    ? "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
+                    : "bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20"
+                }`}
+              >
+                {showCreateForm ? "Cancel" : "+ Create Raffle"}
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
@@ -734,6 +788,118 @@ export function RaffleManager() {
         </div>
       )}
 
+      {/* Past Raffles Modal */}
+      {showPastRaffles && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-4xl w-full shadow-2xl border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                📚 Past Raffles
+              </h3>
+              <Button
+                onClick={() => setShowPastRaffles(false)}
+                className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded-xl"
+              >
+                ✕ Close
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {raffles
+                .filter((raffle) => raffle.completed || raffle.cancelled)
+                .map((raffle) => (
+                  <div
+                    key={raffle.raffleId.toString()}
+                    className="p-6 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                          Raffle #{raffle.raffleId.toString()}
+                        </h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Created by {raffle.creator.slice(0, 6)}...
+                          {raffle.creator.slice(-4)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            raffle.completed
+                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                              : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                          }`}
+                        >
+                          {raffle.completed ? "Completed" : "Cancelled"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Prize Pool
+                        </p>
+                        <p className="font-bold text-green-600 dark:text-green-400">
+                          ${formatUnits(raffle.prizePool, 6)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Tickets Sold
+                        </p>
+                        <p className="font-bold text-gray-900 dark:text-white">
+                          {raffle.ticketsSold.toString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Ticket Price
+                        </p>
+                        <p className="font-bold text-gray-900 dark:text-white">
+                          ${formatUnits(raffle.ticketPrice, 6)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Winner
+                        </p>
+                        <p className="font-bold text-blue-600 dark:text-blue-400 font-mono text-sm">
+                          {raffle.winner &&
+                          raffle.winner !==
+                            "0x0000000000000000000000000000000000000000"
+                            ? `${raffle.winner.slice(0, 6)}...${raffle.winner.slice(-4)}`
+                            : raffle.cancelled
+                              ? "Refunded"
+                              : "Pending"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-gray-400">
+                      Ended:{" "}
+                      {new Date(Number(raffle.endTime) * 1000).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              {raffles.filter((raffle) => raffle.completed || raffle.cancelled)
+                .length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📭</div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    No Past Raffles Yet
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Past raffles will appear here once they complete or get
+                    cancelled.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* My Wins Section */}
       {isConnected && myWins.length > 0 && (
         <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-2xl border border-yellow-200 dark:border-yellow-800">
@@ -862,7 +1028,8 @@ export function RaffleManager() {
         <div className="grid grid-cols-1 gap-6">
           <RaffleCardSkeleton />
         </div>
-      ) : raffles.length === 0 ? (
+      ) : raffles.filter((raffle) => !raffle.completed && !raffle.cancelled)
+          .length === 0 ? (
         <div className="text-center py-16 bg-green-50 dark:bg-green-900/10 rounded-3xl border-2 border-dashed border-green-200 dark:border-green-800">
           <div className="text-4xl mb-4">🎄</div>
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -877,122 +1044,140 @@ export function RaffleManager() {
             fullWidth={false}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
-            Create First Raffle
+            Create Raffle
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
-          {raffles.map((raffle) => {
-            const progress = calculateProgress(raffle);
-            const isCreator =
-              address?.toLowerCase() === raffle.creator.toLowerCase();
-            const canFinalizeRaffle = canFinalize(raffle);
-            const prizePool = Number(formatUnits(raffle.prizePool, 6));
-            const ticketPrice = Number(formatUnits(raffle.ticketPrice, 6));
+          {raffles
+            .filter((raffle) => !raffle.completed && !raffle.cancelled)
+            .map((raffle) => {
+              const progress = calculateProgress(raffle);
+              const isCreator =
+                address?.toLowerCase() === raffle.creator.toLowerCase();
+              const canFinalizeRaffle = canFinalize(raffle);
+              const prizePool = Number(formatUnits(raffle.prizePool, 6));
+              const ticketPrice = Number(formatUnits(raffle.ticketPrice, 6));
 
-            return (
-              <div
-                key={raffle.raffleId.toString()}
-                className="group relative bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border-4 border-green-100 dark:border-green-900/30 transition-all duration-300 hover:scale-[1.01]"
-              >
-                {/* Badge */}
-                <div className="absolute top-6 right-6 flex gap-2">
-                  {isCreator && (
-                    <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 rounded-full">
-                      Owner
+              return (
+                <div
+                  key={raffle.raffleId.toString()}
+                  className="group relative bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border-4 border-green-100 dark:border-green-900/30 transition-all duration-300 hover:scale-[1.01]"
+                >
+                  {/* Badge */}
+                  <div className="absolute top-6 right-6 flex gap-2">
+                    {isCreator && (
+                      <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 rounded-full">
+                        Owner
+                      </span>
+                    )}
+                    <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-full">
+                      #{raffle.raffleId.toString()}
                     </span>
-                  )}
-                  <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-full">
-                    #{raffle.raffleId.toString()}
-                  </span>
-                </div>
+                  </div>
 
-                {/* Header */}
-                <div className="mb-8">
-                  <div className="text-sm font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-2">
-                    Current Prize Pool
+                  {/* Header */}
+                  <div className="mb-8">
+                    <div className="text-sm font-bold text-green-600 dark:text-green-400 uppercase tracking-wider mb-2">
+                      Current Prize Pool
+                    </div>
+                    <div className="text-6xl font-black text-gray-900 dark:text-white tracking-tighter">
+                      ${prizePool.toLocaleString()}
+                      <span className="text-2xl font-bold text-gray-400 ml-2">
+                        USDC
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
+                      <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                        ✨ 90% to Winner
+                      </span>
+                      <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+                        🏠 10% House Fee
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-6xl font-black text-gray-900 dark:text-white tracking-tighter">
-                    ${prizePool.toLocaleString()}
-                    <span className="text-2xl font-bold text-gray-400 ml-2">
-                      USDC
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-4">
-                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
-                      ✨ 90% to Winner
-                    </span>
-                    <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
-                      🏠 10% House Fee
-                    </span>
-                  </div>
-                </div>
 
-                {/* Progress */}
-                <div className="mb-8">
-                  <div className="flex justify-between text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">
-                    <span>Progress</span>
-                    <span className="text-gray-900 dark:text-white">
-                      {raffle.ticketsSold.toString()} /{" "}
-                      {raffle.maxTickets.toString()} Tickets
-                    </span>
+                  {/* Progress */}
+                  <div className="mb-8">
+                    <div className="flex justify-between text-sm font-bold text-gray-500 dark:text-gray-400 mb-3">
+                      <span>Progress</span>
+                      <span className="text-gray-900 dark:text-white">
+                        {raffle.ticketsSold.toString()} /{" "}
+                        {raffle.maxTickets.toString()} Tickets
+                      </span>
+                    </div>
+                    <div className="h-6 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
+                      <div
+                        className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 transition-all duration-500 ease-out relative"
+                        style={{ width: `${Math.max(2, progress)}%` }}
+                      >
+                        <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-right text-emerald-600 dark:text-emerald-400 font-bold">
+                      {progress.toFixed(0)}% Sold
+                    </div>
                   </div>
-                  <div className="h-6 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden border border-gray-200 dark:border-gray-600">
-                    <div
-                      className="h-full bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 transition-all duration-500 ease-out relative"
-                      style={{ width: `${Math.max(2, progress)}%` }}
+
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Ticket Price
+                      </div>
+                      <div className="text-3xl font-black text-gray-900 dark:text-white">
+                        ${ticketPrice}
+                      </div>
+                    </div>
+                    <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
+                      <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Ends In
+                      </div>
+                      <div className="text-3xl font-black text-gray-900 dark:text-white">
+                        {formatTimeRemaining(raffle.endTime)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  {canFinalizeRaffle ? (
+                    <Button
+                      onClick={() => handleFinalizeRaffle(raffle.raffleId)}
+                      disabled={isFinalizePending || isFinalizeConfirming}
+                      className="w-full py-5 text-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 rounded-2xl font-black"
                     >
-                      <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]"></div>
+                      {isFinalizePending || isFinalizeConfirming
+                        ? "Finalizing..."
+                        : "🏆 Finalize Raffle"}
+                    </Button>
+                  ) : canCancelAndRefund(raffle) && isCreator ? (
+                    <div className="space-y-2">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 text-center">
+                        Raffle ended but minimum tickets not met — you can
+                        cancel and refund participants.
+                      </p>
+                      <Button
+                        onClick={() => handleCancelAndRefund(raffle.raffleId)}
+                        disabled={isFinalizePending || isFinalizeConfirming}
+                        className="w-full py-4 text-lg bg-yellow-600 hover:bg-yellow-700 text-white rounded-2xl font-bold"
+                      >
+                        {isFinalizePending || isFinalizeConfirming
+                          ? "Processing..."
+                          : "Cancel & Refund"}
+                      </Button>
                     </div>
-                  </div>
-                  <div className="mt-2 text-sm text-right text-emerald-600 dark:text-emerald-400 font-bold">
-                    {progress.toFixed(0)}% Sold
-                  </div>
+                  ) : (
+                    <Button
+                      onClick={() => setSelectedRaffle(raffle.raffleId)}
+                      disabled={raffle.completed || raffle.cancelled}
+                      className="w-full py-5 text-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white shadow-xl rounded-2xl font-black transition-transform active:scale-95"
+                    >
+                      Buy Tickets 🎫
+                    </Button>
+                  )}
                 </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-6 mb-8">
-                  <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Ticket Price
-                    </div>
-                    <div className="text-3xl font-black text-gray-900 dark:text-white">
-                      ${ticketPrice}
-                    </div>
-                  </div>
-                  <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-700">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Ends In
-                    </div>
-                    <div className="text-3xl font-black text-gray-900 dark:text-white">
-                      {formatTimeRemaining(raffle.endTime)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Button */}
-                {canFinalizeRaffle ? (
-                  <Button
-                    onClick={() => handleFinalizeRaffle(raffle.raffleId)}
-                    disabled={isFinalizePending || isFinalizeConfirming}
-                    className="w-full py-5 text-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xl shadow-purple-600/20 rounded-2xl font-black"
-                  >
-                    {isFinalizePending || isFinalizeConfirming
-                      ? "Finalizing..."
-                      : "🏆 Finalize Raffle"}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => setSelectedRaffle(raffle.raffleId)}
-                    disabled={raffle.completed || raffle.cancelled}
-                    className="w-full py-5 text-xl bg-gray-900 hover:bg-black dark:bg-white dark:hover:bg-gray-100 dark:text-black text-white shadow-xl rounded-2xl font-black transition-transform active:scale-95"
-                  >
-                    Buy Tickets 🎫
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
 
