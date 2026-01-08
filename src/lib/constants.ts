@@ -28,14 +28,14 @@ export const API_BASE_URL: string = process.env.NEXT_PUBLIC_API_URL!;
  * The name of the mini app as displayed to users.
  * Used in titles, headers, and app store listings.
  */
-export const APP_NAME: string = "VENDYZ";
+export const APP_NAME: string = "Vendyz";
 
 /**
  * A brief description of the mini app's functionality.
  * Used in app store listings and metadata.
  */
 export const APP_DESCRIPTION: string =
-  "Vendyz is a blockchain-based vending machine that dispenses **pre-funded anonymous Ethereum wallets**.";
+  "Vendyz is a blockchain-based vending machine that dispenses pre-funded ephemeral Ethereum wallets.";
 
 /**
  * The primary category for the mini app.
@@ -72,13 +72,18 @@ export const APP_SPLASH_URL: string = `${APP_URL}/splash.png`;
  * Background color for the splash screen.
  * Used as fallback when splash image is loading.
  */
-export const APP_SPLASH_BACKGROUND_COLOR: string = "#b3e3e8";
+export const APP_SPLASH_BACKGROUND_COLOR: string = "#EEFFBE";
+
+/**
+ * Primary brand color (kept in constants to align with Tailwind theme)
+ */
+export const APP_PRIMARY_COLOR: string = "#EEFFBE";
 
 export const APP_ACCOUNT_ASSOCIATION: AccountAssociation | undefined =
   undefined;
 
 // --- UI Configuration ---
-export const APP_BUTTON_TEXT: string = "launch vendyz";
+export const APP_BUTTON_TEXT: string = "Launch Vendyz";
 
 // --- Integration Configuration ---
 export const APP_WEBHOOK_URL: string =

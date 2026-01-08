@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjIzOTM5NiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDRENEU1MjIzODRkNkYxMDkwYkZENEM0NTI3YTdkNTJERmQyMGJDYTMifQ",
+    "payload": "eyJkb21haW4iOiJ2ZW5keXoudmVyY2VsLmFwcCJ9",
+    "signature": "4aByIOuqch3t0nCi+4MLkmBQwutCv1ymZYwG/Dsw3tlsKpXJJcA8s1kPjRB/Hjc9O8GcWmB7G6a2/PRt8j2t3xw="
+  },
+  "frame": {
+    "version": "1",
+    "name": "Vendyz",
+    "iconUrl": "https://vendyz.vercel.app/icon.png",
+    "homeUrl": "https://vendyz.vercel.app",
+    "imageUrl": "https://vendyz.vercel.app/image.png",
+    "buttonTitle": "Launch Vendyz",
+    "splashImageUrl": "https://vendyz.vercel.app/splash.png",
+    "splashBackgroundColor": "#EEFFBE",
+    "webhookUrl": "https://vendyz.vercel.app/api/webhook"
+  }
+}
